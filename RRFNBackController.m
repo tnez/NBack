@@ -278,8 +278,31 @@
     @return YES on success, NO on failure
  */
 - (BOOL)loadNewBlockSet {
-    [self registerError:@"Need to implement block set loading"];
-    return NO;
+
+    // get our min and max condition values
+    NSInteger min_n = [[definition valueForKey:RRFNBackMinNConditionKey] integerValue];
+    NSInteger max_n = [[definition valueForKey:RRFNBackMaxNConditionKey] integerValue];
+    
+    // perform checks on min and max values
+    if( max_n < min_n || min_n < 0 ) {
+        [self registerError:@"Could not create block set - Max and/or Min values are invalid"];
+        return NO;
+    }
+
+    // create a simple mutable array [0,1,2,3] representing n-back conditions
+    // ----------------------------------------------------------------------
+    // ... release our old block set (if any)
+    [blockSet release]; blockSet = nil;
+    // ... create new (empty) block set
+    blockSet = [[NSMutableArray alloc] init];
+    
+    // ... for n-values min through max ...
+    for(NSInteger i = min_n; i <= max_n; i++) {
+        // add the value to our block set
+        [blockSet addObject:[NSNumber numberWithInteger:i]];
+    }
+    
+    return YES;
 }
 
 /** Create a new block - register any errors encounterd
