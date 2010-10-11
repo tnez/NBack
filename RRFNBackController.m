@@ -17,12 +17,12 @@
  Give back any memory that may have been allocated by this bundle
  */
 - (void)dealloc {
-    [errorLog release];
+    [errorLog release]; errorLog=nil;
     // any additional release calls go here
     // ------------------------------------
-    [availableCues release];
-    [blockSet release];
-    [block release];
+    [availableCues release]; availableCues=nil;
+    [blockSet release]; blockSet=nil;
+    [block release]; block=nil;
     [super dealloc];
 }
 
@@ -250,6 +250,8 @@
         if([image isValid]) {
             // if the image is valid add it to the heap
             [heap addObject:image];
+            // and set the name of the image to file name
+            [image setName:[img_path stringByDeletingPathExtension]];
         } else {
             // else, register the error
             [self registerError:[NSString stringWithFormat:@"Could not load image file: %@",img_path]];
@@ -309,8 +311,36 @@
     @return YES on success, NO on failure
  */
 - (BOOL)loadNewBlock {
-    [self registerError:@"Need to implement block loading"];
-    return NO;
+
+    // grab values for trials and targets
+    NSInteger trials = [[definition valueForKey:RRFNBackTrialCountKey] integerValue];
+    NSInteger targets = [[definition valueForKey:RRFNBackTargetCountKey] integerValue];
+    
+    // release old block if one exists
+    [block release]; block = nil;
+    
+    // create new (empty) mutable arrray to hold temp cues
+    NSMutableArray *tempBlock = nil;
+    tempBlock = [[NSMutableArray alloc] init];
+    
+    // populate temp block with random sequence of images
+    NSInteger selectedCue = (NSInteger)nil;
+    // ... for each intended trial ...
+    for(NSInteger i=0; i<trials; i++) {
+        // ...grab a cue at random and put into next spot in block
+        selectedCue = arc4random()%[availableCues count];
+        // TODO: remove debug line
+        [tempBlock addObject:[availableCues objectAtIndex:selectedCue]];
+        NSLog(@"Selected Cue: %@ From Index: %d",[[tempBlock objectAtIndex:i] name],selectedCue);
+    }
+    
+    // TODO: check array for unintentional n-backs
+    
+    
+    // TODO: populate targets
+    
+    [tempBlock release]; tempBlock = nil;
+    return YES;
 }
 
 
