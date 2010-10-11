@@ -100,6 +100,74 @@
 			<key>help</key>
 			<string>The duration in milliseconds for which the cue will be presented to the subject</string>
 		</dict>
+		<dict>
+			<key>optionIdentifier</key>
+			<string>RRFNBackMaxNCondition</string>
+			<key>displayName</key>
+			<string>Max N-Value</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>3</integer>
+			<key>min</key>
+			<integer>0</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The maximum N-Back condition</string>
+		</dict>
+		<dict>
+			<key>optionIdentifier</key>
+			<string>RRFNBackMinNCondition</string>
+			<key>displayName</key>
+			<string>Min N-Value</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>0</integer>
+			<key>min</key>
+			<integer>0</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The minimun N-Back condition</string>
+		</dict>
+		<dict>
+			<key>optionIdentifier</key>
+			<string>RRFNBackTrialCount</string>
+			<key>displayName</key>
+			<string>Trial Count</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>21</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The number of trials for each block</string>
+		</dict>
+		<dict>
+			<key>optionIdentifier</key>
+			<string>RRFNBackTargetCount</string>
+			<key>displayName</key>
+			<string>Target Count</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>7</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The number of targets for each block</string>
+		</dict>
 	</array>
 </dict>
 </plist>

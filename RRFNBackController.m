@@ -17,12 +17,12 @@
  Give back any memory that may have been allocated by this bundle
  */
 - (void)dealloc {
-    [errorLog release];
+    [errorLog release]; errorLog=nil;
     // any additional release calls go here
     // ------------------------------------
-    [availableCues release];
-    [blockSet release];
-    [block release];
+    [availableCues release]; availableCues=nil;
+    [blockSet release]; blockSet=nil;
+    [block release]; block=nil;
     [super dealloc];
 }
 
@@ -211,14 +211,15 @@
 - (BOOL)loadCues {
     
     // if no cue directory was provided throw error and return
-    if([[definition valueForKey:RRFNBackCueDirectoryKey] isEqualToString:@""]) {
+    if([[definition valueForKey:RRFNBackCueDirectoryKey] isEqualToString:@""] ||
+        [definition valueForKey:RRFNBackCueDirectoryKey] == nil) {
         [self registerError:@"No cue directory provided"];
         return NO;
     }
 
     // try to get the file paths for all the image files
     NSError *myError = nil;
-    NSArray *tempCues;        
+    NSArray *tempCues = nil;        
     tempCues = [[[NSFileManager defaultManager]
                  contentsOfDirectoryAtPath:[definition valueForKey:RRFNBackCueDirectoryKey] error:&myError] retain];
     // if there was an error getting the file names...
@@ -240,10 +241,17 @@
     // add images to the heap if valid
     NSImage *image;
     for(NSString *img_path in tempCues) {
-        image = [[NSImage alloc] initByReferencingFile:img_path];
+        // stop processing if this is a hidden file (begins with dot)
+        if([img_path hasPrefix:@"."]) {
+            continue;   // go to next iteration of for loop
+        }
+        image = [[NSImage alloc] initByReferencingFile:
+                             [[definition valueForKey:RRFNBackCueDirectoryKey] stringByAppendingPathComponent:img_path]];
         if([image isValid]) {
             // if the image is valid add it to the heap
             [heap addObject:image];
+            // and set the name of the image to file name
+            [image setName:[img_path stringByDeletingPathExtension]];
         } else {
             // else, register the error
             [self registerError:[NSString stringWithFormat:@"Could not load image file: %@",img_path]];
@@ -272,16 +280,67 @@
     @return YES on success, NO on failure
  */
 - (BOOL)loadNewBlockSet {
-    [self registerError:@"Need to implement block set loading"];
-    return NO;
+
+    // get our min and max condition values
+    NSInteger min_n = [[definition valueForKey:RRFNBackMinNConditionKey] integerValue];
+    NSInteger max_n = [[definition valueForKey:RRFNBackMaxNConditionKey] integerValue];
+    
+    // perform checks on min and max values
+    if( max_n < min_n || min_n < 0 ) {
+        [self registerError:@"Could not create block set - Max and/or Min values are invalid"];
+        return NO;
+    }
+
+    // create a simple mutable array [0,1,2,3] representing n-back conditions
+    // ----------------------------------------------------------------------
+    // ... release our old block set (if any)
+    [blockSet release]; blockSet = nil;
+    // ... create new (empty) block set
+    blockSet = [[NSMutableArray alloc] init];
+    
+    // ... for n-values min through max ...
+    for(NSInteger i = min_n; i <= max_n; i++) {
+        // add the value to our block set
+        [blockSet addObject:[NSNumber numberWithInteger:i]];
+    }
+    
+    return YES;
 }
 
 /** Create a new block - register any errors encounterd
     @return YES on success, NO on failure
  */
 - (BOOL)loadNewBlock {
-    [self registerError:@"Need to implement block loading"];
-    return NO;
+
+    // grab values for trials and targets
+    NSInteger trials = [[definition valueForKey:RRFNBackTrialCountKey] integerValue];
+    NSInteger targets = [[definition valueForKey:RRFNBackTargetCountKey] integerValue];
+    
+    // release old block if one exists
+    [block release]; block = nil;
+    
+    // create new (empty) mutable arrray to hold temp cues
+    NSMutableArray *tempBlock = nil;
+    tempBlock = [[NSMutableArray alloc] init];
+    
+    // populate temp block with random sequence of images
+    NSInteger selectedCue = (NSInteger)nil;
+    // ... for each intended trial ...
+    for(NSInteger i=0; i<trials; i++) {
+        // ...grab a cue at random and put into next spot in block
+        selectedCue = arc4random()%[availableCues count];
+        // TODO: remove debug line
+        [tempBlock addObject:[availableCues objectAtIndex:selectedCue]];
+        NSLog(@"Selected Cue: %@ From Index: %d",[[tempBlock objectAtIndex:i] name],selectedCue);
+    }
+    
+    // TODO: check array for unintentional n-backs
+    
+    
+    // TODO: populate targets
+    
+    [tempBlock release]; tempBlock = nil;
+    return YES;
 }
 
 
