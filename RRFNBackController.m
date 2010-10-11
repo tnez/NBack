@@ -211,14 +211,15 @@
 - (BOOL)loadCues {
     
     // if no cue directory was provided throw error and return
-    if([[definition valueForKey:RRFNBackCueDirectoryKey] isEqualToString:@""]) {
+    if([[definition valueForKey:RRFNBackCueDirectoryKey] isEqualToString:@""] ||
+        [definition valueForKey:RRFNBackCueDirectoryKey] == nil) {
         [self registerError:@"No cue directory provided"];
         return NO;
     }
 
     // try to get the file paths for all the image files
     NSError *myError = nil;
-    NSArray *tempCues;        
+    NSArray *tempCues = nil;        
     tempCues = [[[NSFileManager defaultManager]
                  contentsOfDirectoryAtPath:[definition valueForKey:RRFNBackCueDirectoryKey] error:&myError] retain];
     // if there was an error getting the file names...
@@ -240,7 +241,12 @@
     // add images to the heap if valid
     NSImage *image;
     for(NSString *img_path in tempCues) {
-        image = [[NSImage alloc] initByReferencingFile:img_path];
+        // stop processing if this is a hidden file (begins with dot)
+        if([img_path hasPrefix:@"."]) {
+            continue;   // go to next iteration of for loop
+        }
+        image = [[NSImage alloc] initByReferencingFile:
+                             [[definition valueForKey:RRFNBackCueDirectoryKey] stringByAppendingPathComponent:img_path]];
         if([image isValid]) {
             // if the image is valid add it to the heap
             [heap addObject:image];
