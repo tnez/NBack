@@ -334,11 +334,54 @@
         NSLog(@"Selected Cue: %@ From Index: %d",[[tempBlock objectAtIndex:i] name],selectedCue);
     }
     
-    // TODO: check array for unintentional n-backs
+    // create an array representing are targets
+    NSMutableArray *targetBlock = nil;
+    targetBlock = [[NSMutableArray alloc] init];
+    // create an NSNumber which will hold temporary attempts
+    NSNumber *attempt = nil;
+    // for every intended target add an entry to the target block
+    // representing where it should occur...
+    for(NSInteger i=0; i<targets; i++) {
+        // below represents random num modded by target count less nValue
+        // which yields random spread 0 through trials-nValue
+        // and then the result of that is summed with the nValue
+        // resulting in a spread from nth trial to last trial - 1
+        attempt = [NSNumber numberWithInteger:arc4random()%(trials-nValue)+nValue];
+        // check that this attempt has not already been added:
+        // while the attempt is already in target block...
+        while([targetBlock containsObject:attempt]) {
+            // ...get a new value
+            attempt = [NSNumber numberWithInteger:arc4random()%(trials-nValue)+nValue];
+        }
+        // add the now valid attempt to the target block
+        [targetBlock addObject:attempt];
+    }
+    // sort the array in ascending order
+    [targetBlock sortUsingSelector:@selector(compare:)];
+    NSLog(@"Target Block after sort: %@",[targetBlock description]);
     
     
+/*    // remove any accidental target conditions from tempBlock
+    // ...if not a zero-back block
+    if(nValue!=0) {
+        // ...then for each element, starting at nValue
+        NSString *img_name = nil;
+        for(NSInteger i=0;i<[tempBlock count]-nValue;i++) {
+            // ...get the image name
+            img_name = [[tempBlock objectAtIndex:i] retain];
+            // ...while this cue is a target for the one n spots from here...
+            // ...(using name value for future flexibility w/ synonymns)
+            while([img_name isEqualToString:[tempBlock objectAtIndex:i+nValue]]) {
+                // ...replace forward cue w/ new random cue
+                [tempBlock replaceObjectAtIndex:i+nValue
+                                     withObject:[availableCues objectAtIndex:arc4random()%[availableCues count]]];
+            }
+        }
+    } else { // ...special case for zero
+  */  
     // TODO: populate targets
     
+    [targetBlock release]; targetBlock = nil;
     [tempBlock release]; tempBlock = nil;
     return YES;
 }
