@@ -27,7 +27,7 @@
     NSMutableArray                                              *blockSet;
     NSArray                                                     *block;
     NSInteger                                                   blockIndex;
-    
+    BOOL                                                        isTarget;
     
 }
 

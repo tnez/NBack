@@ -180,11 +180,28 @@
 /** Start the next cue if one exists */
 - (void)nextCue {
     
+    // synchronize this block so that keyed responses aren't processd
+    // until the next cue is fully initialized
+    @synchronized(self) {
+    
+        // determine if cue is target
+        // for normal (non-zero) case
+        if(nValue!=0) {
+            isTarget = [[[block objectAtIndex:blockIndex] name]
+                        isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
+        } else { // zero case
+            isTarget = [[[block objectAtIndex:blockIndex] name]
+                        isEqualToString:[zeroTarget name]];
+        }
+        // TODO: display the cue
+        
+    } // end of synchronization
 }
 
 /** Start the next block if one exists */
 - (void)nextBlock {
-    
+    // reset the block index
+    blockIndex = 0;
 }
 
 /** Start the next block set if one exists */
@@ -406,8 +423,14 @@
     [block release]; block=nil;
     block = [[NSArray alloc] initWithArray:tempBlock];
     
+    // reset block index
+    blockIndex = 0;
+    
+    // give back temp resources
     [targetBlock release]; targetBlock = nil;
     [tempBlock release]; tempBlock = nil;
+
+    // success
     return YES;
 }
 
