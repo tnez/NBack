@@ -195,27 +195,87 @@
         }
         // TODO: display the cue
         
+        // update state
+        state = RRFNBackStateTypePresentation;
+        
     } // end of synchronization
 }
 
 /** Start the next block if one exists */
 - (void)nextBlock {
-    // reset the block index
-    blockIndex = 0;
+    
+    // if there are any nValues left in the block set
+    if([blockSet count]>0) {
+
+        // get the next nValue
+        // ...pick an index at random from blockSet array
+        NSInteger idx = arc4random()%[blockSet count];
+        // ...store the new nValue
+        nValue = [[blockSet objectAtIndex:idx] integerValue];
+        // ...remove the value we are using from the block set
+        [blockSet removeObjectAtIndex:idx];
+
+        // load the new block using the new nValue
+        [self loadNewBlock];
+        // reset the block index
+        blockIndex = 0;
+        // begin by getting the next cue
+        [self nextCue];
+        
+    } else { // there are no nValues left in the block set
+        
+        // get the next block set
+        [self nextBlockSet];
+        
+    }
 }
 
 /** Start the next block set if one exists */
 - (void)nextBlockSet {
     
+    // if we still have iterations to run
+    // (repeatCounter has not expired)
+    if(repeatCounter<[[definition valueForKey:RRFNBackBlockSetCountKey] integerValue]) {
+        // ...then, if we can succesfully load a new block set
+        if([self loadNewBlockSet]) {
+            // ...start the next block
+            [self nextBlock];
+        } else { // there was an error generating block set
+            // ...report error
+            [self registerError:@"Unable to generate new block set"];
+        }
+    } else { // repeat counter has expired
+        // ...then we are done
+        [delegate componentDidFinish:self];
+    }
 }
 
 /** Start the ITI (inter-trial interval) */
 - (void)ITI {
+
+    // synchronize this block so that keyed responses aren't processd
+    // until the iti is fully initialized
+    @synchronized(self) {
+
+        // TODO: remove the cue from the view
     
+        // schedule the beginning of the next trial
+        [[TKTimer appTimer] registerEventWithNotification:nil
+                                                inSeconds:0
+                                             microSeconds:
+        [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000];
+        
+        // update state
+        state = RRFNBackStateTypeITI;
+    }
 }
 
 /** Start the IBI (inter-block interval) */
 - (void)IBI {
+    
+    // display the informative prompt
+    
+    // schedule the beginning of the next block
     
 }
 

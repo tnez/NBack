@@ -28,6 +28,8 @@
     NSArray                                                     *block;
     NSInteger                                                   blockIndex;
     BOOL                                                        isTarget;
+    NSInteger                                                   repeatCounter;
+    RRFNBackStateType                                           state;
     
 }
 
