@@ -334,7 +334,7 @@
         NSLog(@"Selected Cue: %@ From Index: %d",[[tempBlock objectAtIndex:i] name],selectedCue);
     }
     
-    // create an array representing are targets
+    // create an array representing the targets
     NSMutableArray *targetBlock = nil;
     targetBlock = [[NSMutableArray alloc] init];
     // create an NSNumber which will hold temporary attempts
@@ -360,26 +360,51 @@
     [targetBlock sortUsingSelector:@selector(compare:)];
     NSLog(@"Target Block after sort: %@",[targetBlock description]);
     
-    
-/*    // remove any accidental target conditions from tempBlock
-    // ...if not a zero-back block
+    // organize the block with reference to target/non-target
+    // for the normal (non-zero) case
     if(nValue!=0) {
-        // ...then for each element, starting at nValue
-        NSString *img_name = nil;
-        for(NSInteger i=0;i<[tempBlock count]-nValue;i++) {
-            // ...get the image name
-            img_name = [[tempBlock objectAtIndex:i] retain];
-            // ...while this cue is a target for the one n spots from here...
-            // ...(using name value for future flexibility w/ synonymns)
-            while([img_name isEqualToString:[tempBlock objectAtIndex:i+nValue]]) {
-                // ...replace forward cue w/ new random cue
-                [tempBlock replaceObjectAtIndex:i+nValue
-                                     withObject:[availableCues objectAtIndex:arc4random()%[availableCues count]]];
+        // ...for each spot in the temporary block starting at the first
+        // ...possible target
+        for(NSInteger i=nValue;i<[tempBlock count];i++) {
+            // ...if this should be a target
+            if([targetBlock containsObject:[NSNumber numberWithInteger:i]]) {
+                // ...make the cue equal to the n-back cue
+                [tempBlock replaceObjectAtIndex:i withObject:[tempBlock objectAtIndex:i-nValue]];
+            } else { // ...if this should not be a target
+                // ...while this spot is an accidental target
+                while([[[tempBlock objectAtIndex:i] name] isEqualToString:
+                       [[tempBlock objectAtIndex:i-nValue] name]]) {
+                    //...generate a random cue
+                    [tempBlock replaceObjectAtIndex:i
+                                         withObject:[availableCues objectAtIndex:arc4random()%[availableCues count]]];
+                }
             }
         }
-    } else { // ...special case for zero
-  */  
-    // TODO: populate targets
+    } else { // the zero case
+        zeroTarget=[availableCues objectAtIndex:arc4random()%[availableCues count]];
+
+        // ...for each spot in the temp block
+        for(NSInteger i=0;i<[tempBlock count];i++) {
+            // ...if this should be a target
+            if([targetBlock containsObject:[NSNumber numberWithInteger:i]]) {
+                // ...make cue equal to zero target cue
+                [tempBlock replaceObjectAtIndex:i withObject:zeroTarget];
+            } else { // ...if this should not be a target
+                // ...while the cue is equal to target
+                while([[[tempBlock objectAtIndex:i] name] isEqualToString:[zeroTarget name]]) {
+                    // ...randomly select a new cue
+                    [tempBlock replaceObjectAtIndex:i 
+                                         withObject:[availableCues objectAtIndex:arc4random()%[availableCues count]]];
+                }
+            }
+        }
+    }
+                
+    NSLog(@"Temp Block after Target Placement: %@",[tempBlock description]);
+
+    // copy the tempBlock over to our real block
+    [block release]; block=nil;
+    block = [[NSArray alloc] initWithArray:tempBlock];
     
     [targetBlock release]; targetBlock = nil;
     [tempBlock release]; tempBlock = nil;

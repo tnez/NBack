@@ -23,6 +23,7 @@
     //////////////////////////////////////////////////////////////////////////
     NSArray                                                     *availableCues;
     NSInteger                                                   nValue;
+    NSImage                                                     *zeroTarget;
     NSMutableArray                                              *blockSet;
     NSArray                                                     *block;
     NSInteger                                                   blockIndex;
