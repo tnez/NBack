@@ -96,9 +96,45 @@
 			<key>allowsEdit</key>
 			<true/>
 			<key>allowsNull</key>
-			<true/>
+			<false/>
 			<key>help</key>
 			<string>The duration in milliseconds for which the cue will be presented to the subject</string>
+		</dict>
+		<dict>
+			<key>optionIdentifier</key>
+			<string>RRFNBackInterBlockDuration</string>
+			<key>displayName</key>
+			<string>IBI Duration</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>8000</integer>
+			<key>min</key>
+			<integer>1</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The duration in milliseconds between blocks</string>
+		</dict>
+		<dict>
+			<key>optionIdentifier</key>
+			<string>RRFNBackInterTrialDuration</string>
+			<key>displayName</key>
+			<string>ITI Duration</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>2000</integer>
+			<key>min</key>
+			<integer>1</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The duration in milliseconds between trials</string>
 		</dict>
 		<dict>
 			<key>optionIdentifier</key>

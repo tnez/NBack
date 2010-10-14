@@ -7,9 +7,11 @@
 //  Copyright 2010, Residential Research Facility,
 //  University of Kentucky. All Rights Reserved.
 /////////////////////////////////////////////////////////////
+
 #import <Cocoa/Cocoa.h>
 #import <TKUtility/TKUtility.h>
-@class RRFNBackImageView;
+
+@class RRFNBackImageView,RRFNBackITIView,RRFNBackIBIView;
 
 @interface RRFNBackController : NSObject <TKComponentBundleLoading> {
 
@@ -24,6 +26,7 @@
     //////////////////////////////////////////////////////////////////////////
     NSArray                                                     *availableCues;
     NSInteger                                                   nValue;
+    NSImage                                                     *currentCue;
     NSImage                                                     *zeroTarget;
     NSMutableArray                                              *blockSet;
     NSArray                                                     *block;
@@ -33,6 +36,8 @@
     NSInteger                                                   state;
     // IB ELEMENTS ///////////////////////////////////////////////////////////
     IBOutlet RRFNBackImageView                                  *cueView;
+    IBOutlet RRFNBackITIView                                    *itiView;
+    IBOutlet RRFNBackIBIView                                    *ibiView;
 }
 
 // PROTOCOL PROPERTIES ///////////////////////////////////////////////////////
@@ -45,6 +50,9 @@
 // ADDITIONAL PROPERTIES /////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 @property (assign)              IBOutlet RRFNBackImageView      *cueView;
+@property (assign)              IBOutlet RRFNBackITIView        *itiView;
+@property (assign)              IBOutlet RRFNBackIBIView        *ibiView;
+
 
 
 #pragma mark REQUIRED PROTOCOL METHODS
@@ -91,10 +99,10 @@
 
 
 
-
 #pragma mark OPTIONAL PROTOCOL METHODS
-// UNCOMMENT ANY OF THE FOLLOWING METHODS IF THEIR BEHAVIOR IS DESIRED //
-/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// UNCOMMENT ANY OF THE FOLLOWING METHODS IF THEIR BEHAVIOR IS DESIRED      //
+//////////////////////////////////////////////////////////////////////////////
 
 /** Run header if something other than default is required */
 //- (NSString *)runHeader;
@@ -107,30 +115,48 @@
 
 
 
-
 #pragma mark UTILITY METHODS
 /** Add the error to an ongoing error log */
 - (void)registerError: (NSString *)theError;
 
+/** Decrement a second counter tha will be displayed in the IBI view
+    ARGS: params are optional and will most often be nil but required since
+          selectors used in notifications require exactly one argument
+ */
+- (void)performSecondTick: (id)params;
 
 
 
 #pragma mark (ADD) STATES
-/** Start the next cue if one exists */
-- (void)nextCue;
+/** Start the next cue if one exists
+    ARGS: params are optional and will most often be nil but required since
+          selectors used in notifications require exactly one argument
+ */
+- (void)nextCue: (id)params;
 
-/** Start the next block if one exists */
-- (void)nextBlock;
+/** Start the next block if one exists
+    ARGS: params are optional and will most often be nil but required since
+          selectors used in notifications require exactly one argument
+ */
+- (void)nextBlock: (id)params;
 
-/** Start the next block set if one exists */
-- (void)nextBlockSet;
+/** Start the next block set if one exists
+    ARGS: params are optional and will most often be nil but required since
+          selectors used in notifications require exactly one argument
+ */
+- (void)nextBlockSet: (id)params;
 
-/** Start the ITI */
-- (void)ITI;
+/** Start the inter-trial interval (ITI)
+    ARGS: params are optional and will most often be nil but required since
+          selectors used in notifications require exactly one argument
+ */
+- (void)ITI: (id)params;
 
-/** Start the IBI (inter-block interval) */
-- (void)IBI;
-
+/** Start the inter-block interval (IBI)
+    ARGS: params are optional and will most often be nil but required since
+          selectors used in notifications require exactly one argument
+ */
+- (void)IBI: (id)params;
 
 
 
@@ -146,10 +172,21 @@
 
 
 
+#pragma mark Notifications
+//////////////////////////////////////////////////////////////////////////////
+// HERE YOU CAN DEFINE THE KEY NAMES FOR NOTIFICATIONS THAT WILL BE USED    //
+// Hint: Timed events will need to use notifications                        //
+//////////////////////////////////////////////////////////////////////////////
+extern NSString * const RRFNBackNextCueNotification;
+extern NSString * const RRFNBackBeginITINotification;
+extern NSString * const RRFNBackPerformTickNotification;
+
+
 
 #pragma mark Preference Keys
+//////////////////////////////////////////////////////////////////////////////
 // HERE YOU DEFINE KEY REFERENCES FOR ANY PREFERENCE VALUES                 //
-// ex: extern NSString * const RRFNBackNameOfPreferenceKey;     //
+// ex: extern NSString * const RRFNBackNameOfPreferenceKey;                 //
 //////////////////////////////////////////////////////////////////////////////
 extern NSString * const RRFNBackTaskNameKey;
 extern NSString * const RRFNBackDataDirectoryKey;
@@ -166,18 +203,18 @@ extern NSString * const RRFNBackTrialCountKey;
 
 
 
-
 #pragma mark Internal Strings
-// HERE YOU DEFINE KEYS FOR CONSTANT STRINGS //
-///////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// HERE YOU DEFINE KEYS FOR CONSTANT STRINGS                                //
+//////////////////////////////////////////////////////////////////////////////
 extern NSString * const RRFNBackMainNibNameKey;
 
 
 
-
 #pragma mark Enumerated Values
-// HERE YOU CAN DEFINE ENUMERATED VALUES
-/////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// HERE YOU CAN DEFINE ENUMERATED VALUES                                    //
+//////////////////////////////////////////////////////////////////////////////
 typedef NSInteger RRFNBackStateType;
 enum {
     RRFNBackStateTypePresentation   = 1,

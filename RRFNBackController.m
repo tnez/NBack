@@ -10,8 +10,12 @@
 #import "RRFNBackController.h"
 #import "RRFNBackImageView.h"
 
+#define CUE_DURATION [[definition valueForKey:RRFNBackCueDurationKey] unsignedIntegerValue] * 1000
+#define ITI_DURATION [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000
+#define IBI_DURATION [[definition valueForKey:RRFNBackInterBlockDurationKey] unsignedIntegerValue] * 1000
+
 @implementation RRFNBackController
-@synthesize delegate,definition,errorLog,view,cueView; // add any member that has a property
+@synthesize delegate,definition,errorLog,view,cueView,itiView,ibiView; // add any member that has a property
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -33,8 +37,14 @@
  Start the component - will receive this message from the component controller
  */
 - (void)begin {
-    // next cue
-    [self nextCue];
+    // if we are cleared to begin...
+    if([self isClearedToBegin]) {
+        // start our sequence by getting our next (first) block set
+        [self nextBlockSet:nil];
+    } else { // something has gone wrong
+        // tell our controller to raise an error and break our execution
+        [delegate throwError:errorLog andBreak:YES];
+    }
 }
 
 /**
@@ -97,23 +107,39 @@
 
     // --- LOAD CUES
     [self loadCues];
-    
-    // --- LOAD BLOCK SET
-    [self loadNewBlockSet];
-    
-    // --- LOAD BLOCK
-    [self loadNewBlock];
 
     // --- LOAD NIB
     if([NSBundle loadNibNamed:RRFNBackMainNibNameKey owner:self]) {
         // interface initialization can go here
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        
+        // hide all of our views
+        [cueView setHidden:YES];
+        [itiView setHidden:YES];
+        [ibiView setHidden:YES];
         
     } else {
         // nib did not load
         [self registerError:@"Could not load Nib file"];
     }
+    
+    // --- REGISTER FOR ANY NOTIFICATIONS
+    // ... next cue notification
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(nextCue:)
+                                                 name:RRFNBackNextCueNotification
+                                               object:nil];
+    // ... iti notification
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(ITI:)
+                                                 name:RRFNBackBeginITINotification
+                                               object:nil];
+    // ... second tick notification
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(performSecondTick:)
+                                                 name:RRFNBackPerformTickNotification
+                                               object:nil];
+    
+    blockIndex = -1;
 }
 
 /**
@@ -129,6 +155,10 @@
 - (void)tearDown {
     // any finalization should be done here:
     // - remove any temporary data files
+    
+    // - remove observers for any notifications we may have registered
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
 }
 
 /**
@@ -176,104 +206,159 @@
     [self setErrorLog:[[errorLog stringByAppendingString:theError] stringByAppendingString:@"\n"]];
 }
 
-        
+- (void)performSecondTick: (id)params {
+    // TODO: implement perform second tick
+}
+
 
 #pragma mark (ADD) STATES
 /** Start the next cue if one exists */
-- (void)nextCue {
+- (void)nextCue: (id)params {
     
     // synchronize this block so that keyed responses aren't processd
-    // until the next cue is fully initialized
+    // until the cue state is fully initialized
     @synchronized(self) {
-
-        // find our next cue
-        NSImage *cue = [block objectAtIndex:blockIndex];
         
-        // determine if cue is target
-        // for normal (non-zero) case
-        if(nValue!=0) {
-            isTarget = [[cue name]
-                        isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
-        } else { // zero case
-            isTarget = [[cue name]
-                        isEqualToString:[zeroTarget name]];
+        // TODO: revisit as set content view
+        // hide any views that may be visible
+        // ...if previous state was IBI
+        if(state=RRFNBackStateTypeIBI) {
+            // ...hide the IBI View
+            [ibiView setHidden:YES];
+        } else { // the state is assumed to be RRFNBackStateTypeITI
+            // ...hide the ITI View
+            [itiView setHidden:YES];
         }
         
-        // display the cue
-        [cueView setCue:cue];
-        
-        // update state
-        state = RRFNBackStateTypePresentation;
-        
-        // make the cue view the key view
-        [[view window] makeFirstResponder:cueView];
-        
-    } // end of synchronization
-}
+        // if there is another cue to get
+        if(++blockIndex < [block count]) {
+            
+            // get the new cue
+            currentCue = [block objectAtIndex:blockIndex];
+
+            // determine if cue is target
+            // for normal (non-zero) case
+            if(nValue!=0) {
+                isTarget = blockIndex < nValue || [[currentCue name] isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
+            } else { // zero case
+                isTarget = [[currentCue name]
+                            isEqualToString:[zeroTarget name]];
+            }
+            
+            // display the cue
+            [cueView setCue:currentCue];
+            [cueView setHidden:NO];
+            // make the cue view the key view
+            [[view window] makeFirstResponder:cueView];
+            
+            // update state
+            state = RRFNBackStateTypePresentation;
+            
+            // schedule the beginning of the ITI after cue
+            [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackBeginITINotification object:self]
+                                                    inSeconds:0
+                                                 microSeconds:CUE_DURATION];
+
+        } else { // no more cues
+            // next block
+            [self nextBlock:nil];
+        }
+    }   // END OF SYNCHRONIZATION
+}       // END OF NEXT_CUE:
 
 /** Start the next block if one exists */
-- (void)nextBlock {
+- (void)nextBlock: (id)params {
     
-    // if there are any nValues left in the block set
-    if([blockSet count]>0) {
+    // synchronize this block so that keyed responses aren't processed
+    // before the IBI block state has been fully initialized
+    @synchronized(self) {
+        // if we are coming from an ITI state
+        if(state=RRFNBackStateTypeITI) {
+            // ...hide the ITI View
+            [itiView setHidden:YES];
+        }   // else we are coming from initial state,
+            // where nothing needs to be hidden
 
-        // get the next nValue
-        // ...pick an index at random from blockSet array
-        NSInteger idx = arc4random()%[blockSet count];
-        // ...store the new nValue
-        nValue = [[blockSet objectAtIndex:idx] integerValue];
-        // ...remove the value we are using from the block set
-        [blockSet removeObjectAtIndex:idx];
+        // get our next block...
+        // if there are any nValues left in the block set
+        if([blockSet count]>0) {
 
-        // load the new block using the new nValue
-        [self loadNewBlock];
-        // reset the block index
-        blockIndex = 0;
-        // begin by getting the next cue
-        [self nextCue];
-        
-    } else { // there are no nValues left in the block set
-        
-        // get the next block set
-        [self nextBlockSet];
-        
-    }
-}
+            // get the next nValue
+            // ...pick an index at random from blockSet array
+            NSInteger idx = arc4random()%[blockSet count];
+            // ...store the new nValue
+            nValue = [[blockSet objectAtIndex:idx] integerValue];
+            // ...remove the value we are using from the block set
+            [blockSet removeObjectAtIndex:idx];
+
+            // load the new block using the new nValue
+            [self loadNewBlock];
+            
+            // display the IBI view
+            [ibiView setHidden:NO];
+            // set the subject notification line
+            // - if non-zero back
+            if(nValue) {
+                // TODO: notify user of n and procedure
+                
+            } else { // zero-back
+                // TODO: notify user of target and procedure
+                
+            }
+            
+            // update the state value
+            state=RRFNBackStateTypeIBI;
+            
+            // schedule next trial after IBI
+            [self IBI:nil];
+                        
+        } else { // there are no nValues left in the block set
+            // .....get the next block set
+            [self nextBlockSet:nil];
+        }
+
+    }   // END OF SYNCHRONIZATION
+}       // END OF NEXT_BLOCK:
 
 /** Start the next block set if one exists */
-- (void)nextBlockSet {
+- (void)nextBlockSet: (id)params {
     
-    // if we still have iterations to run
-    // (repeatCounter has not expired)
-    if(repeatCounter<[[definition valueForKey:RRFNBackBlockSetCountKey] integerValue]) {
-        // ...then, if we can succesfully load a new block set
-        if([self loadNewBlockSet]) {
-            // ...start the next block
-            [self nextBlock];
-        } else { // there was an error generating block set
-            // ...report error
-            [self registerError:@"Unable to generate new block set"];
+    @synchronized(self) {
+        // if we still have iterations to run
+        // (repeatCounter has not expired)
+        if(repeatCounter<[[definition valueForKey:RRFNBackBlockSetCountKey] integerValue]) {
+            // ...then, if we can succesfully load a new block set
+            if([self loadNewBlockSet]) {
+                // increment block set counter
+                repeatCounter++;
+                // ...start the next block
+                [self nextBlock:nil];
+            } else { // there was an error generating block set
+                // ...report error
+                [self registerError:@"Unable to generate new block set"];
+            }
+        } else { // repeat counter has expired
+            // ...then we are done
+            [delegate componentDidFinish:self];
         }
-    } else { // repeat counter has expired
-        // ...then we are done
-        [delegate componentDidFinish:self];
-    }
-}
+
+    }   // END OF SYNCHRONIZATION
+}       // END OF NEXT_BLOCK_SET:
 
 /** Start the ITI (inter-trial interval) */
-- (void)ITI {
+- (void)ITI: (id)params {
 
     // synchronize this block so that keyed responses aren't processd
     // until the iti is fully initialized
     @synchronized(self) {
-
+        
         // TODO: remove the cue from the view
+        [cueView setCue:nil];
     
         // schedule the beginning of the next trial
-        [[TKTimer appTimer] registerEventWithNotification:nil
+        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
                                                 inSeconds:0
-                                             microSeconds:
-        [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000];
+                                             microSeconds:ITI_DURATION];
         
         // update state
         state = RRFNBackStateTypeITI;
@@ -281,13 +366,21 @@
 }
 
 /** Start the IBI (inter-block interval) */
-- (void)IBI {
+- (void)IBI: (id)params {
     
-    // display the informative prompt
-    
-    // schedule the beginning of the next block
-    
-}
+    @synchronized(self) {
+
+        // TODO: display prompt
+        
+        // update state
+        state=RRFNBackStateTypeIBI;
+
+        // schedule the beginning of the next block
+        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
+                                                inSeconds: 0
+                                             microSeconds:IBI_DURATION];
+    }   // END SYNCH
+}       // END IBI:
 
 
 
@@ -398,6 +491,13 @@
     @return YES on success, NO on failure
  */
 - (BOOL)loadNewBlock {
+    
+    // if for some reason we don't have available cues
+    if(![availableCues count]) {
+        //...register error
+        [self registerError:@"Could not load block: no cues available"];
+        return NO;
+    }
 
     // grab values for trials and targets
     NSInteger trials = [[definition valueForKey:RRFNBackTrialCountKey] integerValue];
@@ -449,7 +549,7 @@
     
     // organize the block with reference to target/non-target
     // for the normal (non-zero) case
-    if(nValue!=0) {
+    if(nValue) {
         // ...for each spot in the temporary block starting at the first
         // ...possible target
         for(NSInteger i=nValue;i<[tempBlock count];i++) {
@@ -506,22 +606,28 @@
 
 
 
+#pragma mark Notifications
+NSString * const RRFNBackNextCueNotification =      @"RRFNBackNextCue";
+NSString * const RRFNBackBeginITINotification =     @"RRFNBackBeginITI";
+NSString * const RRFNBackPerformTickNotification =  @"RRFNBackPerformTick";
+
+
 
 #pragma mark Preference Keys
 // HERE YOU DEFINE KEY REFERENCES FOR ANY PREFERENCE VALUES
 // ex: NSString * const RRFNBackNameOfPreferenceKey = @"RRFNBackNameOfPreference"
-NSString * const RRFNBackTaskNameKey = @"RRFNBackTaskName";
-NSString * const RRFNBackDataDirectoryKey = @"RRFNBackDataDirectory";
-NSString * const RRFNBackBlockSetCountKey = @"RRFNBackBlockSetCount";
-NSString * const RRFNBackCueDirectoryKey = @"RRFNBackCueDirectory";
-NSString * const RRFNBackCueDurationKey = @"RRFNBackCueDuration";
-NSString * const RRFNBackInterBlockDurationKey = @"RRFNBackInterBlockDuration";
-NSString * const RRFNBackInterTrialDurationKey = @"RRFNBackInterTrialDuration";
-NSString * const RRFNBackMaxNConditionKey = @"RRFNBackMaxNCondition";
-NSString * const RRFNBackMinNConditionKey = @"RRFNBackMinNCondition";
-NSString * const RRFNBackResponseTypeKey = @"RRFNBackResponseType";
-NSString * const RRFNBackTargetCountKey = @"RRFNBackTargetCount";
-NSString * const RRFNBackTrialCountKey = @"RRFNBackTrialCount";
+NSString * const RRFNBackTaskNameKey =              @"RRFNBackTaskName";
+NSString * const RRFNBackDataDirectoryKey =         @"RRFNBackDataDirectory";
+NSString * const RRFNBackBlockSetCountKey =         @"RRFNBackBlockSetCount";
+NSString * const RRFNBackCueDirectoryKey =          @"RRFNBackCueDirectory";
+NSString * const RRFNBackCueDurationKey =           @"RRFNBackCueDuration";
+NSString * const RRFNBackInterBlockDurationKey =    @"RRFNBackInterBlockDuration";
+NSString * const RRFNBackInterTrialDurationKey =    @"RRFNBackInterTrialDuration";
+NSString * const RRFNBackMaxNConditionKey =         @"RRFNBackMaxNCondition";
+NSString * const RRFNBackMinNConditionKey =         @"RRFNBackMinNCondition";
+NSString * const RRFNBackResponseTypeKey =          @"RRFNBackResponseType";
+NSString * const RRFNBackTargetCountKey =           @"RRFNBackTargetCount";
+NSString * const RRFNBackTrialCountKey =            @"RRFNBackTrialCount";
 
 
 
@@ -529,7 +635,7 @@ NSString * const RRFNBackTrialCountKey = @"RRFNBackTrialCount";
 #pragma mark Internal Strings
 // HERE YOU DEFINE KEYS FOR CONSTANT STRINGS //
 ///////////////////////////////////////////////
-NSString * const RRFNBackMainNibNameKey = @"RRFNBackMainNib";
+NSString * const RRFNBackMainNibNameKey =           @"RRFNBackMainNib";
         
        
         
