@@ -32,7 +32,7 @@
     NSInteger                                                   repeatCounter;
     NSInteger                                                   state;
     // IB ELEMENTS ///////////////////////////////////////////////////////////
-    RRFNBackImageView                                           *cueView;
+    IBOutlet RRFNBackImageView                                  *cueView;
 }
 
 // PROTOCOL PROPERTIES ///////////////////////////////////////////////////////
@@ -44,7 +44,7 @@
 
 // ADDITIONAL PROPERTIES /////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-@property (assign)              RRFNBackImageView               *cueView;
+@property (assign)              IBOutlet RRFNBackImageView      *cueView;
 
 
 #pragma mark REQUIRED PROTOCOL METHODS

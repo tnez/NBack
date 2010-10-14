@@ -200,10 +200,13 @@
         }
         
         // display the cue
+        [cueView setCue:cue];
         
-
         // update state
         state = RRFNBackStateTypePresentation;
+        
+        // make the cue view the key view
+        [[view window] makeFirstResponder:cueView];
         
     } // end of synchronization
 }

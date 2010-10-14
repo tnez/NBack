@@ -25,25 +25,37 @@
 
 - (void)drawRect:(NSRect)rect {
     // Drawing code here...
-    // set image size equal to frame size
-    [cue setSize:[[self frame] size]];
-    // draw the image
-    [cue drawInRect:[self frame] fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
-    
+    [[self image] drawInRect:[self bounds] fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+
 }
 
 - (void)setCue: (NSImage *)newCue {
-    // point to the new cue
-    cue = newCue;
-    // update screen
-    [self setNeedsDisplay:YES];
+    // set the image using new cue
+    [self setImage:newCue];
+    [self setImageFrameStyle:NSImageFramePhoto];
+    [self setImageScaling:NSScaleProportionally];
+    [self setImageAlignment:NSImageAlignCenter];
     
+    // update display
+    [self setNeedsDisplay];
 }
 
 #pragma mark EVENT HANDLING
 
 - (BOOL)acceptsFirstResponser {
     return YES;
+}
+
+- (void)keyDown: (NSEvent *)theEvent {
+    if([[theEvent characters] isEqualToString:@"1"]) {
+        NSLog(@"User has entered 1");
+    }
+    if([[theEvent characters] isEqualToString:@"3"]) {
+        NSLog(@"User has entered 3");
+        // take hide image
+        [self setImage:nil];
+        [self setNeedsDisplay];
+    }
 }
 
 @end

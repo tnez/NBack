@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface RRFNBackImageView : NSView {
+@interface RRFNBackImageView : NSImageView {
     NSImage                                 *cue;
 }
 @property (assign)          NSImage         *cue;
