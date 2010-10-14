@@ -29,7 +29,7 @@
     NSInteger                                                   blockIndex;
     BOOL                                                        isTarget;
     NSInteger                                                   repeatCounter;
-    RRFNBackStateType                                           state;
+    NSInteger                                                   state;
     
 }
 

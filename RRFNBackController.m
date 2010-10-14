@@ -32,7 +32,8 @@
  Start the component - will receive this message from the component controller
  */
 - (void)begin {
-    
+    // next cue
+    [self nextCue];
 }
 
 /**
@@ -183,18 +184,23 @@
     // synchronize this block so that keyed responses aren't processd
     // until the next cue is fully initialized
     @synchronized(self) {
-    
+
+        // find our next cue
+        NSImage *cue = [block objectAtIndex:blockIndex];
+        
         // determine if cue is target
         // for normal (non-zero) case
         if(nValue!=0) {
-            isTarget = [[[block objectAtIndex:blockIndex] name]
+            isTarget = [[cue name]
                         isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
         } else { // zero case
-            isTarget = [[[block objectAtIndex:blockIndex] name]
+            isTarget = [[cue name]
                         isEqualToString:[zeroTarget name]];
         }
-        // TODO: display the cue
         
+        // display the cue
+        [cue drawInRect:[[self mainView] frame] fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+
         // update state
         state = RRFNBackStateTypePresentation;
         
