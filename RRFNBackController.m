@@ -8,9 +8,10 @@
 //  University of Kentucky. All Rights Reserved.
 /////////////////////////////////////////////////////////////
 #import "RRFNBackController.h"
+#import "RRFNBackImageView.h"
 
 @implementation RRFNBackController
-@synthesize delegate,definition,errorLog,view; // add any member that has a property
+@synthesize delegate,definition,errorLog,view,cueView; // add any member that has a property
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -199,7 +200,7 @@
         }
         
         // display the cue
-        [cue drawInRect:[[self mainView] frame] fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+        
 
         // update state
         state = RRFNBackStateTypePresentation;

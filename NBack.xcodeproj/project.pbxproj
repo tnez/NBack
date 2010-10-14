@@ -29,6 +29,7 @@
 		404B5EE51250B8C500437416 /* BooleanOption.xib in Resources */ = {isa = PBXBuildFile; fileRef = 404B5ECE1250B59C00437416 /* BooleanOption.xib */; };
 		404B5F2D12524A5600437416 /* RRFNBackManifest.plist in Resources */ = {isa = PBXBuildFile; fileRef = 404B5F2C12524A5600437416 /* RRFNBackManifest.plist */; };
 		404B5F2E12524A5600437416 /* RRFNBackManifest.plist in Resources */ = {isa = PBXBuildFile; fileRef = 404B5F2C12524A5600437416 /* RRFNBackManifest.plist */; };
+		4061B40F1267130B0073A21E /* RRFNBackImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4061B40E1267130B0073A21E /* RRFNBackImageView.m */; };
 		4063B2B512551F490096BFE1 /* RRFNBack.bundle in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8D5B49B6048680CD000E48DA /* RRFNBack.bundle */; };
 		40C04C52122D5921003E8D1C /* TKUtility.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 40340010122D5809003CABA9 /* TKUtility.framework */; };
 		8D5B49B0048680CD000E48DA /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
@@ -114,6 +115,8 @@
 		404B5ED41250B59C00437416 /* Mock_AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Mock_AppDelegate.m; sourceTree = "<group>"; };
 		404B5ED51250B59C00437416 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		404B5F2C12524A5600437416 /* RRFNBackManifest.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = RRFNBackManifest.plist; sourceTree = "<group>"; };
+		4061B40D1267130B0073A21E /* RRFNBackImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RRFNBackImageView.h; sourceTree = "<group>"; };
+		4061B40E1267130B0073A21E /* RRFNBackImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RRFNBackImageView.m; sourceTree = "<group>"; };
 		8D5B49B6048680CD000E48DA /* RRFNBack.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RRFNBack.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D5B49B7048680CD000E48DA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D2F7E65807B2D6F200F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
@@ -145,8 +148,6 @@
 			children = (
 				404B5EBD1250B59C00437416 /* Testing */,
 				08FB77AFFE84173DC02AAC07 /* Classes */,
-				40340001122D574E003CABA9 /* RRFNBackController.h */,
-				40340002122D574E003CABA9 /* RRFNBackController.m */,
 				32C88E010371C26100C91783 /* Other Sources */,
 				089C167CFE841241C02AAC07 /* Resources */,
 				089C1671FE841209C02AAC07 /* Frameworks and Libraries */,
@@ -178,6 +179,10 @@
 		08FB77AFFE84173DC02AAC07 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				40340001122D574E003CABA9 /* RRFNBackController.h */,
+				40340002122D574E003CABA9 /* RRFNBackController.m */,
+				4061B40D1267130B0073A21E /* RRFNBackImageView.h */,
+				4061B40E1267130B0073A21E /* RRFNBackImageView.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -366,6 +371,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				40340003122D574E003CABA9 /* RRFNBackController.m in Sources */,
+				4061B40F1267130B0073A21E /* RRFNBackImageView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

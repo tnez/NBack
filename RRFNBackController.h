@@ -9,6 +9,7 @@
 /////////////////////////////////////////////////////////////
 #import <Cocoa/Cocoa.h>
 #import <TKUtility/TKUtility.h>
+@class RRFNBackImageView;
 
 @interface RRFNBackController : NSObject <TKComponentBundleLoading> {
 
@@ -30,7 +31,8 @@
     BOOL                                                        isTarget;
     NSInteger                                                   repeatCounter;
     NSInteger                                                   state;
-    
+    // IB ELEMENTS ///////////////////////////////////////////////////////////
+    RRFNBackImageView                                           *cueView;
 }
 
 // PROTOCOL PROPERTIES ///////////////////////////////////////////////////////
@@ -42,7 +44,7 @@
 
 // ADDITIONAL PROPERTIES /////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-
+@property (assign)              RRFNBackImageView               *cueView;
 
 
 #pragma mark REQUIRED PROTOCOL METHODS
