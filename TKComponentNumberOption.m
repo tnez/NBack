@@ -23,7 +23,7 @@
     if(self=[super initWithDictionary:values]) {
         [self setMin:[values valueForKey:TKComponentOptionMinKey]];
         [self setMax:[values valueForKey:TKComponentOptionMaxKey]];
-        [self setValue:(NSNumber *)[values valueForKey:TKComponentOptionDefaultKey]];
+        [self setValue:[values valueForKey:TKComponentOptionDefaultKey]];
         [NSBundle loadNibNamed:TKComponentNumberOptionNibNameKey owner:self];
         return self;
     }

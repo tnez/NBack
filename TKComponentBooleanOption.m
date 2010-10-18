@@ -19,7 +19,7 @@
 
 - (id)initWithDictionary: (NSDictionary *)values {
     if(self=[super initWithDictionary:values]) {
-        [self setValue:(NSNumber *)[values valueForKey:TKComponentOptionDefaultKey]];
+        [self setValue:[values valueForKey:TKComponentOptionDefaultKey]];
         [NSBundle loadNibNamed:TKComponentBooleanOptionNibNameKey owner:self];
         return self;
     }

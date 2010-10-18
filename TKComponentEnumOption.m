@@ -21,7 +21,7 @@
 - (id)initWithDictionary: (NSDictionary *)values {
     if(self=[super initWithDictionary:values]) {
         [self setEnumeratedList:[values valueForKey:TKComponentOptionEnumeratedListKey]];
-        [self setValue:(NSNumber *)[values valueForKey:TKComponentOptionDefaultKey]];
+        [self setValue:[values valueForKey:TKComponentOptionDefaultKey]];
         [NSBundle loadNibNamed:TKComponentEnumOptionNibNameKey owner:self];
         return self;
     }

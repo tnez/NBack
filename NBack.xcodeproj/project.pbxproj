@@ -240,10 +240,10 @@
 				404B5EC81250B59C00437416 /* TKComponentPathOption.h */,
 				404B5EC91250B59C00437416 /* TKComponentPathOption.m */,
 				404B5ECA1250B59C00437416 /* TKComponentEnumOption.h */,
+				404B5ECB1250B59C00437416 /* TKComponentEnumOption.m */,
 				404B5ED31250B59C00437416 /* Mock_AppDelegate.h */,
 				404B5ED41250B59C00437416 /* Mock_AppDelegate.m */,
 				404B5ED51250B59C00437416 /* main.m */,
-				404B5ECB1250B59C00437416 /* TKComponentEnumOption.m */,
 			);
 			name = Testing;
 			sourceTree = "<group>";
