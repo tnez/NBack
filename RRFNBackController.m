@@ -203,6 +203,11 @@
 #pragma mark UTILITY METHODS
 /** */
 - (BOOL)formsTarget: (NSImage *)cue {
+    // the zero case needs special handling...
+    if(nValue==0) {
+        return [[cue name] isEqualToString:[zeroTarget name]];
+    }
+    // if we are here, this is not the zero case, so...
     // first check if nValue and index is such that we can have a target
     if(blockIndex - nValue < 0) {
         // this can't be a target, since there is no n-back at this spot
@@ -255,12 +260,19 @@
         
         // TODO: revisit as set content view
         // hide any views that may be visible
-        // ...if previous state was IBI
-        if(state=RRFNBackStateTypeIBI) {
-            // ...hide the IBI View
+        // ...if previous state was ITI
+        if(state==RRFNBackStateTypeITI) {
+            // ...and the subject did not respond
+            if(![cueView subjectHasAlreadyResponded]) {
+                // ...check if the last cue formed a target 
+                if([self formsTarget:currentCue]) {
+                    NSLog(@"User did not respond to target condition");
+                } else { // not a target condition
+                    NSLog(@"User did not respond to a non-target condition");
+                }
+            }
+        } else { // the state is assumed to be RRFNBackStateTypeIBI
             [promptView setHidden:YES];
-        } else { // the state is assumed to be RRFNBackStateTypeITI
-
         }
         
         // if there is another cue to get
@@ -382,7 +394,9 @@
     // until the iti is fully initialized
     @synchronized(self) {
         
-        // TODO: remove the cue from the view
+        // hide the image, but leave the cue view there to handle
+        // key events . . . the current cue is still held by us
+        // so this will not mess up our target checking
         [cueView setCue:nil];
     
         // schedule the beginning of the next trial
@@ -400,10 +414,11 @@
     
     @synchronized(self) {
 
-        // TODO: display prompt
-        
         // update state
         state=RRFNBackStateTypeIBI;
+        
+        // remove the cue view
+        [cueView setHidden:YES];
         
         // ready prompt subject prompt...
         secondCounter = IBI_DURATION / (1000 * 1000); // IBI duration as seconds
@@ -436,10 +451,15 @@
 /** If appropriate log the affirmation and result (correct?) */
 - (void)subjectAffirms: (id)sender {
     // if we are in appropriate state (CUE or ITI)
-    if(state = RRFNBackStateTypePresentation ||
-       state = RRFNBackStateTypeITI) {
-        
-        // TODO: implement subject input loggin
+    if(state == RRFNBackStateTypePresentation ||
+       state == RRFNBackStateTypeITI) {
+        // ...then check if subject is correct...
+        if([self formsTarget:currentCue]) {
+            // TODO: convert log line into real case
+            NSLog(@"User has correctly affirmed");
+        } else { // user has incorrectly affirmed target
+            NSLog(@"User has incorrectly affirmed");
+        }
         
     } else {
         // we are not in a state where we accept user input
@@ -449,10 +469,15 @@
 
 - (void)subjectDenies: (id)sender {
     // if we are in appropriate state (CUE or ITI)
-    if(state = RRFNBackStateTypePresentation ||
-       state = RRFNBackStateTypeITI) {
-        
-        // TODO: implement subject input loggin
+    if(state == RRFNBackStateTypePresentation ||
+       state == RRFNBackStateTypeITI) {
+        // ...then check if subject is correct
+        if(![self formsTarget:currentCue]) {
+            // TODO: convert log line into real case
+            NSLog(@"User has correctly denied");
+        } else { // user has incorrectly affirmed target
+            NSLog(@"User has incorrectly denied");
+        }
         
     } else {
         // we are not in a state where we accept user input

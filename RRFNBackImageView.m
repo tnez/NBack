@@ -7,11 +7,12 @@
 //
 
 #import "RRFNBackImageView.h"
+#import "RRFNBackController.h"
 
 
 @implementation RRFNBackImageView
 
-@synthesize cue;
+@synthesize cue,delegate,subjectHasAlreadyResponded;
 
 #pragma mark IMAGE AND DRAWING CODE
 
@@ -38,6 +39,12 @@
     
     // update display
     [self setNeedsDisplay];
+    
+    // if the new cue is not nil...
+    if(newCue) {
+        // ... reset our user has responded flag
+        subjectHasAlreadyResponded = NO;
+    }
 }
 
 #pragma mark EVENT HANDLING
@@ -47,12 +54,25 @@
 }
 
 - (void)keyDown: (NSEvent *)theEvent {
-    if([[theEvent characters] isEqualToString:@"1"]) {
-        [delegate subjectAffirms: self];
+    // if this is the first response for this presentation
+    if(!subjectHasAlreadyResponded) {
+        // ... go ahead and process the event
+        if([[theEvent characters] isEqualToString:@"1"]) {
+            [delegate subjectAffirms: self];
+            subjectHasAlreadyResponded = YES;
+            return;
+        }
+        if([[theEvent characters] isEqualToString:@"3"]) {
+            [delegate subjectDenies: self];
+            subjectHasAlreadyResponded = YES;
+            return;
+        }
+    } else { // subject already responded to this cue...
+        // ...do nothing
     }
-    if([[theEvent characters] isEqualToString:@"3"]) {
-        [delegate subjectDenies: self];
-    }
+    // if we've made it here, we don't process the event...
+    // ...give it to super just in case
+    [super keyDown:theEvent];
 }
 
 @end

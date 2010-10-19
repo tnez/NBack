@@ -12,7 +12,9 @@
 @interface RRFNBackImageView : NSImageView {
     IBOutlet        id                      delegate;
     NSImage                                 *cue;
+    BOOL                                    subjectHasAlreadyResponded;
 }
 @property (assign)          IBOutlet id     delegate;
 @property (assign)          NSImage         *cue;
+@property (readonly)        BOOL            subjectHasAlreadyResponded;
 @end

@@ -125,7 +125,7 @@
 /** Does the cue object form a target with the n-back condition?
     ARGS: an NSImage representing a cue
  */
-- (BOOL)formsTaget: (NSImage *)cue;
+- (BOOL)formsTarget: (NSImage *)cue;
 
 /** Add the error to an ongoing error log */
 - (void)registerError: (NSString *)theError;
