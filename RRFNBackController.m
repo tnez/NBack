@@ -15,7 +15,7 @@
 #define IBI_DURATION [[definition valueForKey:RRFNBackInterBlockDurationKey] unsignedIntegerValue] * 1000
 
 @implementation RRFNBackController
-@synthesize delegate,definition,errorLog,view,cueView,itiView,ibiView,ibiPrompt; // add any member that has a property
+@synthesize delegate,definition,errorLog,view,cueView,ibiPrompt,promptView,itiView,ibiView; // add any member that has a property
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -208,7 +208,30 @@
 }
 
 - (void)performSecondTick: (id)params {
-    // TODO: implement perform second tick
+    // this only increments the displayed seconds,
+    // it has no bearing on when the next component
+    // starts . . . race conditions may exist, but
+    // because this is only in charge of a prompt
+    // it is of little concern
+    // All we need to do to deal with this is change
+    // the prompt when we have seconds left, and do nothing
+    // when we are out of time
+    // ...so if we have time left (presumably)
+    if(secondCounter-- > 0) {
+        // update the subject prompt
+        // ...get all but the last of the user prompt
+        NSString *tmp = [[ibiPrompt stringByTrimmingCharactersInSet:[NSCharacterSet decimalDigitCharacterSet]] retain];
+        // ...make new string w/ previous and new second tick
+        [self setIbiPrompt:[tmp stringByAppendingString:[NSString stringWithFormat:@"%d",secondCounter ]]];
+        // ...let go of temporary string
+        [tmp release]; tmp=nil;
+        // schedule the next notification
+        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackPerformTickNotification object:self]
+                                                inSeconds:1 microSeconds:0];
+
+    } else { // we have no time left...
+             // ... don't do anything
+    }
 }
 
 
@@ -225,10 +248,9 @@
         // ...if previous state was IBI
         if(state=RRFNBackStateTypeIBI) {
             // ...hide the IBI View
-            [ibiView setHidden:YES];
+            [promptView setHidden:YES];
         } else { // the state is assumed to be RRFNBackStateTypeITI
-            // ...hide the ITI View
-            [itiView setHidden:YES];
+
         }
         
         // if there is another cue to get
@@ -307,10 +329,7 @@
                 
             }
             
-            // update the state value
-            state=RRFNBackStateTypeIBI;
-            
-            // schedule next trial after IBI
+            // begin the IBI
             [self IBI:nil];
                         
         } else { // there are no nValues left in the block set
@@ -375,11 +394,29 @@
         
         // update state
         state=RRFNBackStateTypeIBI;
+        
+        // ready prompt subject prompt...
+        secondCounter = IBI_DURATION / (1000 * 1000); // IBI duration as seconds
+        // ...non-zero case
+        if(nValue) {
+            [self setIbiPrompt:[NSString stringWithFormat:@"Enter '1' when the image is the same as the image %d-back\n...begin in: %d",
+                                nValue, secondCounter ]];
+        } else { // zero case
+            [self setIbiPrompt:[NSString stringWithFormat:@"Enter '1' when the %@ is displayed\n...begin in: %d",
+                                [zeroTarget name], secondCounter ]];
+        }
+        // display prompt
+        [promptView setHidden:NO];
 
         // schedule the beginning of the next block
         [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
                                                 inSeconds: 0
                                              microSeconds:IBI_DURATION];
+
+        // begin the ticking seconds countdown
+        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackPerformTickNotification object:self]
+                                                inSeconds:1
+                                             microSeconds:0];
     }   // END SYNCH
 }       // END IBI:
 
@@ -587,13 +624,18 @@
             }
         }
     }
-                
+
     NSLog(@"Temp Block after Target Placement: %@",[tempBlock description]);
 
     // copy the tempBlock over to our real block
     [block release]; block=nil;
     block = [[NSArray alloc] initWithArray:tempBlock];
     
+    NSLog(@"Block for %d-Back:",nValue);
+    for(NSInteger i=0; i<[block count]; i++) {
+        NSLog(@"Cue: %@",[[block objectAtIndex:i] name]);
+    }
+
     // reset block index
     blockIndex = 0;
     

@@ -35,11 +35,12 @@
     NSInteger                                                   repeatCounter;
     NSInteger                                                   state;
     NSInteger                                                   secondCounter;
+    NSString                                                    *ibiPrompt;
     // IB ELEMENTS ///////////////////////////////////////////////////////////
     IBOutlet RRFNBackImageView                                  *cueView;
     IBOutlet RRFNBackITIView                                    *itiView;
     IBOutlet RRFNBackIBIView                                    *ibiView;
-    IBOutlet NSString                                           *ibiPrompt;
+    IBOutlet NSTextField                                        *promptView;
 }
 
 // PROTOCOL PROPERTIES ///////////////////////////////////////////////////////
@@ -51,10 +52,12 @@
 
 // ADDITIONAL PROPERTIES /////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
+@property (nonatomic, retain)   NSString                        *ibiPrompt;
+@property (assign)              IBOutlet NSTextField            *promptView;
 @property (assign)              IBOutlet RRFNBackImageView      *cueView;
 @property (assign)              IBOutlet RRFNBackITIView        *itiView;
 @property (assign)              IBOutlet RRFNBackIBIView        *ibiView;
-@property (nonatomic, retain)   IBOutlet NSString               *ibiPrompt;
+
 
 
 
