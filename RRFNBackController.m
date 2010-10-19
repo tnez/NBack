@@ -637,7 +637,7 @@
     }
 
     // reset block index
-    blockIndex = 0;
+    blockIndex = -1;
     
     // give back temp resources
     [targetBlock release]; targetBlock = nil;
