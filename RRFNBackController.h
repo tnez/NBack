@@ -122,6 +122,11 @@
 
 
 #pragma mark UTILITY METHODS
+/** Does the cue object form a target with the n-back condition?
+    ARGS: an NSImage representing a cue
+ */
+- (BOOL)formsTaget: (NSImage *)cue;
+
 /** Add the error to an ongoing error log */
 - (void)registerError: (NSString *)theError;
 
@@ -163,6 +168,15 @@
           selectors used in notifications require exactly one argument
  */
 - (void)IBI: (id)params;
+
+
+
+#pragma mark (ADD) HANDLERS
+/** Subject has confirmed that the target condition has happended */
+- (void)subjectAffirms: (id)sender;
+
+/** Subject has denied that the target condition has happended */
+- (void)subjectDenies: (id)sender;
 
 
 

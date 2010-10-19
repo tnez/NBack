@@ -10,7 +10,9 @@
 
 
 @interface RRFNBackImageView : NSImageView {
+    IBOutlet        id                      delegate;
     NSImage                                 *cue;
 }
+@property (assign)          IBOutlet id     delegate;
 @property (assign)          NSImage         *cue;
 @end

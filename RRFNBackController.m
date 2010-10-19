@@ -201,6 +201,16 @@
         
 
 #pragma mark UTILITY METHODS
+/** */
+- (BOOL)formsTarget: (NSImage *)cue {
+    // first check if nValue and index is such that we can have a target
+    if(blockIndex - nValue < 0) {
+        // this can't be a target, since there is no n-back at this spot
+        return NO;
+    }
+    return [[cue name] isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
+}
+
 /** Add additional methods required for operation */
 - (void)registerError: (NSString *)theError {
     // append the new error to the error log
@@ -419,6 +429,36 @@
                                              microSeconds:0];
     }   // END SYNCH
 }       // END IBI:
+
+
+
+#pragma mark (ADD) HANDLERS
+/** If appropriate log the affirmation and result (correct?) */
+- (void)subjectAffirms: (id)sender {
+    // if we are in appropriate state (CUE or ITI)
+    if(state = RRFNBackStateTypePresentation ||
+       state = RRFNBackStateTypeITI) {
+        
+        // TODO: implement subject input loggin
+        
+    } else {
+        // we are not in a state where we accept user input
+        // . . . do nothing
+    }
+}
+
+- (void)subjectDenies: (id)sender {
+    // if we are in appropriate state (CUE or ITI)
+    if(state = RRFNBackStateTypePresentation ||
+       state = RRFNBackStateTypeITI) {
+        
+        // TODO: implement subject input loggin
+        
+    } else {
+        // we are not in a state where we accept user input
+        // . . . do nothing
+    }
+}
 
 
 

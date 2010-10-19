@@ -48,13 +48,10 @@
 
 - (void)keyDown: (NSEvent *)theEvent {
     if([[theEvent characters] isEqualToString:@"1"]) {
-        NSLog(@"User has entered 1");
+        [delegate subjectAffirms: self];
     }
     if([[theEvent characters] isEqualToString:@"3"]) {
-        NSLog(@"User has entered 3");
-        // take hide image
-        [self setImage:nil];
-        [self setNeedsDisplay];
+        [delegate subjectDenies: self];
     }
 }
 
