@@ -34,10 +34,12 @@
     BOOL                                                        isTarget;
     NSInteger                                                   repeatCounter;
     NSInteger                                                   state;
+    NSInteger                                                   secondCounter;
     // IB ELEMENTS ///////////////////////////////////////////////////////////
     IBOutlet RRFNBackImageView                                  *cueView;
     IBOutlet RRFNBackITIView                                    *itiView;
     IBOutlet RRFNBackIBIView                                    *ibiView;
+    IBOutlet NSString                                           *ibiPrompt;
 }
 
 // PROTOCOL PROPERTIES ///////////////////////////////////////////////////////
@@ -52,6 +54,7 @@
 @property (assign)              IBOutlet RRFNBackImageView      *cueView;
 @property (assign)              IBOutlet RRFNBackITIView        *itiView;
 @property (assign)              IBOutlet RRFNBackIBIView        *ibiView;
+@property (nonatomic, retain)   IBOutlet NSString               *ibiPrompt;
 
 
 

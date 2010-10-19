@@ -15,7 +15,7 @@
 #define IBI_DURATION [[definition valueForKey:RRFNBackInterBlockDurationKey] unsignedIntegerValue] * 1000
 
 @implementation RRFNBackController
-@synthesize delegate,definition,errorLog,view,cueView,itiView,ibiView; // add any member that has a property
+@synthesize delegate,definition,errorLog,view,cueView,itiView,ibiView,ibiPrompt; // add any member that has a property
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -28,6 +28,7 @@
     [availableCues release]; availableCues=nil;
     [blockSet release]; blockSet=nil;
     [block release]; block=nil;
+    [ibiPrompt release]; ibiPrompt=nil;
     [super dealloc];
 }
 
