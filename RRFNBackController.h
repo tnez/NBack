@@ -140,6 +140,11 @@
  */
 - (void)performSecondTick: (id)params;
 
+/** Write data kept in the temporary store to a temporary file
+    This will include a summary for the previous block
+ */
+- (void)writeStoredData;
+
 
 
 #pragma mark (ADD) STATES

@@ -253,7 +253,81 @@
     }
 }
 
+/** Write data kept in the temporary store to a temporary file
+    This will include a summary for the previous block
+    TODO: finish implementation
+ */
+- (void)writeStoredData {
 
+    // ___BLOCK SUMMARY___
+    // vars to get
+    NSUInteger correctRespTarget = 0;
+    NSUInteger errorRespTarget = 0;
+    NSUInteger correctRespNonTarget = 0;
+    NSUInteger errorRespNonTarget = 0;
+    NSUInteger nonRespTarget = 0;
+    NSUInteger nonRespNonTarget = 0;
+    NSUInteger correctRespTargetTotLatency = 0;
+    NSUInteger errorRespTargetTotLatency = 0;
+    NSUInteger correctRespNonTargetTotLatency = 0;
+    NSUInteger errorRespNonTargetTotLatency = 0;
+    // get 'em vars . . . for every record in our temp storage
+    for(NSDictionary *trialInfo in dataStorage) {
+        // ...if user claimed target condition
+        if([trialInfo valueForKey:@"ResponseType" isEqualToString:@"Confirm"]) {
+            // check whether right or wrong
+            if([trialInfo valueForKey:@"TrialType" isEqualToString:@"Target"]) {
+                // user correctly affirmed target
+                // ...so increment...
+                correctRespTarget++;
+                // ...and add to latency for this type
+                correctRespTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
+            } else {
+                // user incorrectly affirmed target
+                // ...so increment...
+                errorRespTarget++;
+                // ...and add latency for this type
+                errorRespTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
+            }
+            continue; // go back to the for loop for the next record
+        }
+        // ...if user claimed non-target condition
+        if([trialInfo valueForKey:@"ResponseType" isEqualToString:@"Deny"]) {
+            // check whether right or wrong
+            if([trialInfo valueForKey:@"TrialType" isEqualToString:@"Non-Target"]) {
+                // user correctly denied target
+                // ...so increment...
+                correctRespNonTarget++;
+                // ...and add to latency for this type
+                correctRespNonTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
+            } else {
+                // user incorrectly denied target
+                // ...so increment...
+                errorRespNonTarget++;
+                // ...and add to latency for this type
+                errorRespNonTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
+            }
+            continue; // go back to the for loop for the next record
+        }
+        // at this point we can assume the user provided no response
+        // so check the trial type
+        if([trialInfo valueForKey:@"TrialType" isEqualToString:@"Target"]) {
+            // user provided no response for target
+            // ...increment that counter...
+            nonRespTarget++;
+        } else {
+            // type can be assumed to be Non-Target because that is all that remains
+            nonRespNonTarget++;
+        }
+    }
+    
+    // TODO: calculate our avg latencies and queue the output
+}
+
+            
+                
+                
+    
 #pragma mark (ADD) STATES
 /** Start the next cue if one exists */
 - (void)nextCue: (id)params {
@@ -313,6 +387,8 @@
             cueStartTime = current_time_marker();
             
         } else { // no more cues
+            // write our temp data to file
+            [self writeStoredData];
             // next block
             [self nextBlock:nil];
         }
@@ -346,18 +422,6 @@
 
             // load the new block using the new nValue
             [self loadNewBlock];
-            
-            // display the IBI view
-            [ibiView setHidden:NO];
-            // set the subject notification line
-            // - if non-zero back
-            if(nValue) {
-                // TODO: notify user of n and procedure
-                
-            } else { // zero-back
-                // TODO: notify user of target and procedure
-                
-            }
             
             // begin the IBI
             [self IBI:nil];
@@ -495,16 +559,17 @@
        state == RRFNBackStateTypeITI) {
         // ...then check if subject is correct
         if(![self formsTarget:currentCue]) {
+            // user has correctly denied target
             // put data into our temporary storage for later analysis
             [dataStorage addObject:[DATA @"Deny", @"ResponseType",
-                             @"Target", @"TrialType",
+                             @"Non-Target", @"TrialType",
                         [NSNumber numberWithUnsignedInteger:
                          time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
 
-        } else { // user has incorrectly affirmed target
+        } else { // user has incorrectly denied target
             // put data into our temporary storage for later analysis            
             [dataStorage addObject:[DATA @"Deny", @"ResponseType",
-                             @"Non-Target", @"TrialType",
+                             @"Target", @"TrialType",
                         [NSNumber numberWithUnsignedInteger:
                          time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
         }
@@ -648,8 +713,8 @@
     for(NSInteger i=0; i<trials; i++) {
         // ...grab a cue at random and put into next spot in block
         selectedCue = arc4random()%[availableCues count];
-        // TODO: remove debug line
         [tempBlock addObject:[availableCues objectAtIndex:selectedCue]];
+        
         NSLog(@"Selected Cue: %@ From Index: %d",[[tempBlock objectAtIndex:i] name],selectedCue);
     }
     
