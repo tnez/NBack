@@ -10,12 +10,15 @@
 #import "RRFNBackController.h"
 #import "RRFNBackImageView.h"
 
+#define DATA NSDictionary dictionaryWithObjectsAndKeys:
+#define oTRUE [NSNumber numberWithBool:TRUE]
+#define oFALSE [NSNumber numberWithBool:FALSE]
 #define CUE_DURATION [[definition valueForKey:RRFNBackCueDurationKey] unsignedIntegerValue] * 1000
 #define ITI_DURATION [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000
 #define IBI_DURATION [[definition valueForKey:RRFNBackInterBlockDurationKey] unsignedIntegerValue] * 1000
 
 @implementation RRFNBackController
-@synthesize delegate,definition,errorLog,view,cueView,ibiPrompt,promptView,itiView,ibiView; // add any member that has a property
+@synthesize delegate,definition,errorLog,view,dataStorage,cueView,ibiPrompt,promptView,itiView,ibiView; // add any member that has a property
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -102,10 +105,12 @@
  Perform any and all initialization required by component - load any nib files and perform all required initialization
  */
 - (void)setup {
+    
 
     // --- RESET ERROR LOG
     [self setErrorLog:@""];
-
+    // --- CREATE EMPTY QUEUE FOR DATA
+    [self setDataStorage:[NSMutableArray array]];
     // --- LOAD CUES
     [self loadCues];
 
@@ -140,7 +145,6 @@
                                                  name:RRFNBackPerformTickNotification
                                                object:nil];
     
-    blockIndex = -1;
 }
 
 /**
@@ -265,10 +269,11 @@
             // ...and the subject did not respond
             if(![cueView subjectHasAlreadyResponded]) {
                 // ...check if the last cue formed a target 
+                // TODO: add null responses to data
                 if([self formsTarget:currentCue]) {
-                    NSLog(@"User did not respond to target condition");
+                    [dataStorage addObject:[DATA @"Target", @"TrialType",nil]];
                 } else { // not a target condition
-                    NSLog(@"User did not respond to a non-target condition");
+                    [dataStorage addObject:[DATA @"Non-Target", @"TrialType",nil]];
                 }
             }
         } else { // the state is assumed to be RRFNBackStateTypeIBI
@@ -304,6 +309,9 @@
                                                     inSeconds:0
                                                  microSeconds:CUE_DURATION];
 
+            // reset time marker
+            cueStartTime = current_time_marker();
+            
         } else { // no more cues
             // next block
             [self nextBlock:nil];
@@ -420,6 +428,12 @@
         // remove the cue view
         [cueView setHidden:YES];
         
+        NSLog(@"\n\nIteration %d\n",repeatCounter);
+        for(NSDictionary *item in dataStorage) {
+            NSLog(@"%@",[item description]);
+        }
+
+        
         // ready prompt subject prompt...
         secondCounter = IBI_DURATION / (1000 * 1000); // IBI duration as seconds
         // ...non-zero case
@@ -453,11 +467,19 @@
     // if we are in appropriate state (CUE or ITI)
     if(state == RRFNBackStateTypePresentation ||
        state == RRFNBackStateTypeITI) {
-        // ...then check if subject is correct...
+
+
         if([self formsTarget:currentCue]) {
-            // TODO: convert log line into real case
+            [dataStorage addObject:[DATA @"Confirm", @"ResponseType",
+                             @"Target", @"TrialType",
+                        [NSNumber numberWithUnsignedInteger:
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];
             NSLog(@"User has correctly affirmed");
         } else { // user has incorrectly affirmed target
+            [dataStorage addObject:[DATA @"Confirm", @"ResponseType",
+                             @"Non-Target", @"TrialType",
+                        [NSNumber numberWithUnsignedInteger:
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
             NSLog(@"User has incorrectly affirmed");
         }
         
@@ -473,12 +495,19 @@
        state == RRFNBackStateTypeITI) {
         // ...then check if subject is correct
         if(![self formsTarget:currentCue]) {
-            // TODO: convert log line into real case
-            NSLog(@"User has correctly denied");
+            // put data into our temporary storage for later analysis
+            [dataStorage addObject:[DATA @"Deny", @"ResponseType",
+                             @"Target", @"TrialType",
+                        [NSNumber numberWithUnsignedInteger:
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
+
         } else { // user has incorrectly affirmed target
-            NSLog(@"User has incorrectly denied");
+            // put data into our temporary storage for later analysis            
+            [dataStorage addObject:[DATA @"Deny", @"ResponseType",
+                             @"Non-Target", @"TrialType",
+                        [NSNumber numberWithUnsignedInteger:
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
         }
-        
     } else {
         // we are not in a state where we accept user input
         // . . . do nothing
