@@ -13,9 +13,12 @@
 #define DATA NSDictionary dictionaryWithObjectsAndKeys:
 #define oTRUE [NSNumber numberWithBool:TRUE]
 #define oFALSE [NSNumber numberWithBool:FALSE]
+#define TRIALS [[definition valueForKey:RRFNBackTrialCountKey] integerValue]
+#define TARGETS [[definition valueForKey:RRFNBackTargetCountKey] integerValue]
 #define CUE_DURATION [[definition valueForKey:RRFNBackCueDurationKey] unsignedIntegerValue] * 1000
 #define ITI_DURATION [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000
 #define IBI_DURATION [[definition valueForKey:RRFNBackInterBlockDurationKey] unsignedIntegerValue] * 1000
+#define TKLogToTemp(fmt, ...) [delegate logStringToDefaultTempFile:[NSString stringWithFormat:fmt, ##__VA_ARGS__]]
 
 @implementation RRFNBackController
 @synthesize delegate,definition,errorLog,view,dataStorage,cueView,ibiPrompt,promptView,itiView,ibiView; // add any member that has a property
@@ -274,44 +277,44 @@
     // get 'em vars . . . for every record in our temp storage
     for(NSDictionary *trialInfo in dataStorage) {
         // ...if user claimed target condition
-        if([trialInfo valueForKey:@"ResponseType" isEqualToString:@"Confirm"]) {
+        if([[trialInfo valueForKey:@"ResponseType"] isEqualToString:@"Y"]) {
             // check whether right or wrong
-            if([trialInfo valueForKey:@"TrialType" isEqualToString:@"Target"]) {
-                // user correctly affirmed target
+            if([[trialInfo valueForKey:@"TrialType"] isEqualToString:@"T"]) {
+                // user said target - trial is target (correct target)
                 // ...so increment...
                 correctRespTarget++;
                 // ...and add to latency for this type
                 correctRespTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
             } else {
-                // user incorrectly affirmed target
+                // user said target - but trial non-target (error non-target)
                 // ...so increment...
-                errorRespTarget++;
+                errorRespNonTarget++;
                 // ...and add latency for this type
-                errorRespTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
+                errorRespNonTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
             }
             continue; // go back to the for loop for the next record
         }
         // ...if user claimed non-target condition
-        if([trialInfo valueForKey:@"ResponseType" isEqualToString:@"Deny"]) {
+        if([[trialInfo valueForKey:@"ResponseType"] isEqualToString:@"N"]) {
             // check whether right or wrong
-            if([trialInfo valueForKey:@"TrialType" isEqualToString:@"Non-Target"]) {
-                // user correctly denied target
+            if([[trialInfo valueForKey:@"TrialType"] isEqualToString:@"NT"]) {
+                // user said no target - trial is non-target (correct non-target)
                 // ...so increment...
                 correctRespNonTarget++;
                 // ...and add to latency for this type
                 correctRespNonTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
             } else {
-                // user incorrectly denied target
+                // user said no target - but trial is target (error target)
                 // ...so increment...
-                errorRespNonTarget++;
+                errorRespTarget++;
                 // ...and add to latency for this type
-                errorRespNonTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
+                errorRespTargetTotLatency += [[trialInfo valueForKey:@"Latency"] unsignedIntegerValue];
             }
             continue; // go back to the for loop for the next record
         }
         // at this point we can assume the user provided no response
         // so check the trial type
-        if([trialInfo valueForKey:@"TrialType" isEqualToString:@"Target"]) {
+        if([[trialInfo valueForKey:@"TrialType"] isEqualToString:@"T"]) {
             // user provided no response for target
             // ...increment that counter...
             nonRespTarget++;
@@ -321,7 +324,62 @@
         }
     }
     
-    // TODO: calculate our avg latencies and queue the output
+    // calculate avg latency from total in microseconds for each type
+    // declare our vars
+    TKTime correctRespTargetAvgLatency = new_time_marker(0,0);
+    TKTime errorRespTargetAvgLatency = new_time_marker(0,0);
+    TKTime correctRespNonTargetAvgLatency = new_time_marker(0,0);
+    TKTime errorRespNonTargetAvgLatency = new_time_marker(0,0);
+    // get'em vars
+    if(correctRespTarget) {
+        correctRespTargetAvgLatency = time_from_microseconds(correctRespTargetTotLatency/correctRespTarget);
+    }
+    if(errorRespTarget) {
+        errorRespTargetAvgLatency = time_from_microseconds(errorRespTargetTotLatency/errorRespTarget);
+    }
+    if(correctRespNonTarget) {
+        correctRespNonTargetAvgLatency = time_from_microseconds(correctRespNonTargetTotLatency/correctRespNonTarget);
+    }
+    if(errorRespNonTarget) {
+        errorRespNonTargetAvgLatency = time_from_microseconds(errorRespNonTargetTotLatency/errorRespNonTarget);
+    }
+
+    // log an empty string for newline to seperate blocks in logfile
+    TKLogToTemp(@"");
+    
+    // create the log summary
+    TKLogToTemp(@"N-VALUE: %d", nValue);
+    TKLogToTemp(@"CORRECT TARGET RESP: %d", correctRespTarget);
+    TKLogToTemp(@"CORRECT NON-TARGET RESP: %d", correctRespNonTarget);
+    TKLogToTemp(@"ERROR TARGET RESP: %d", errorRespTarget);
+    TKLogToTemp(@"ERROR NON-TARGET RESP: %d", errorRespNonTarget);
+    TKLogToTemp(@"CORRECT TARGET RESP AVG LATENCY: %d.%d",
+                correctRespTargetAvgLatency.seconds,correctRespTargetAvgLatency.microseconds);
+    TKLogToTemp(@"CORRECT NON-TARGET RESP AVG LATENCY: %d.%d",
+                correctRespNonTargetAvgLatency.seconds,correctRespNonTargetAvgLatency.microseconds);
+    TKLogToTemp(@"ERROR TARGET RESP AVG LATENCY: %d.%d",
+                errorRespTargetAvgLatency.seconds,errorRespTargetAvgLatency.microseconds);
+    TKLogToTemp(@"ERROR NON-TARGET RESP AVG LATENCY: %d.%d",
+                errorRespNonTargetAvgLatency.seconds,errorRespNonTargetAvgLatency.microseconds);
+    TKLogToTemp(@"NON-RESP TARGET: %d", nonRespTarget);
+    TKLogToTemp(@"NON-RESP NON-TARGET: %d", nonRespNonTarget);
+    
+    // log raw data
+    // header row
+    TKLogToTemp(@"RESP:\tTYPE:\tLATENCY:");
+    TKLogToTemp(@"----\t----\t-------");
+    for(NSDictionary *record in dataStorage) {
+        // get time value from microseconds to struct
+        TKTime tmpTime = time_from_microseconds([[record valueForKey:@"Latency"] unsignedIntegerValue]);
+        TKLogToTemp(@"%@\t%@\t%d.%d",
+                    [record valueForKey:@"ResponseType"],
+                    [record valueForKey:@"TrialType"],
+                    tmpTime.seconds,
+                    tmpTime.microseconds);
+    }
+    
+    // empty our data storage for our next block
+    [dataStorage removeAllObjects];
 }
 
             
@@ -331,196 +389,184 @@
 #pragma mark (ADD) STATES
 /** Start the next cue if one exists */
 - (void)nextCue: (id)params {
+
+    // check the state we are coming from
+    if(state==RRFNBackStateTypeITI) {
+        // ...we are coming from an ITI
+        // ...(in other words, we are coming from a previous trial)
+        if(![cueView subjectHasAlreadyResponded]) {
+            // ...but the subject did not respond...
+            if([self formsTarget:currentCue]) {
+                // ...to a target trial
+                [dataStorage addObject:[DATA @"T", @"TrialType",nil]];
+            } else {
+                // ...to a non-target trial
+                [dataStorage addObject:[DATA @"NT", @"TrialType",nil]];
+            }
+        // no else branch - if the subject did respond, it has already been handled    
+        }
+    } else { // the state is assumed to be RRFNBackStateTypeIBI (no previous trial)
+        // ...hide the user prompt
+        [promptView setHidden:YES];
+    }
     
-    // synchronize this block so that keyed responses aren't processd
-    // until the cue state is fully initialized
-    @synchronized(self) {
-        
-        // TODO: revisit as set content view
-        // hide any views that may be visible
-        // ...if previous state was ITI
-        if(state==RRFNBackStateTypeITI) {
-            // ...and the subject did not respond
-            if(![cueView subjectHasAlreadyResponded]) {
-                // ...check if the last cue formed a target 
-                // TODO: add null responses to data
-                if([self formsTarget:currentCue]) {
-                    [dataStorage addObject:[DATA @"Target", @"TrialType",nil]];
-                } else { // not a target condition
-                    [dataStorage addObject:[DATA @"Non-Target", @"TrialType",nil]];
-                }
-            }
-        } else { // the state is assumed to be RRFNBackStateTypeIBI
-            [promptView setHidden:YES];
+    // if there is another cue to get
+    if(++blockIndex < [block count]) {
+        // get the new cue
+        currentCue = [block objectAtIndex:blockIndex];
+
+        // determine if cue is target
+        // for normal (non-zero) case
+        if(nValue!=0) {
+            isTarget = blockIndex < nValue || [[currentCue name] isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
+        } else { // zero case
+            isTarget = [[currentCue name]
+                        isEqualToString:[zeroTarget name]];
         }
         
-        // if there is another cue to get
-        if(++blockIndex < [block count]) {
-            
-            // get the new cue
-            currentCue = [block objectAtIndex:blockIndex];
 
-            // determine if cue is target
-            // for normal (non-zero) case
-            if(nValue!=0) {
-                isTarget = blockIndex < nValue || [[currentCue name] isEqualToString:[[block objectAtIndex:blockIndex-nValue] name]];
-            } else { // zero case
-                isTarget = [[currentCue name]
-                            isEqualToString:[zeroTarget name]];
-            }
-            
-            // display the cue
-            [cueView setCue:currentCue];
-            [cueView setHidden:NO];
-            // make the cue view the key view
-            [[view window] makeFirstResponder:cueView];
-            
-            // update state
-            state = RRFNBackStateTypePresentation;
-            
-            // schedule the beginning of the ITI after cue
-            [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackBeginITINotification object:self]
-                                                    inSeconds:0
-                                                 microSeconds:CUE_DURATION];
+        
+        // update state
+        state = RRFNBackStateTypePresentation;
+        
+        // schedule the beginning of the ITI after cue
+        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackBeginITINotification object:self]
+                                                inSeconds:0
+                                             microSeconds:CUE_DURATION];
 
-            // reset time marker
-            cueStartTime = current_time_marker();
-            
-        } else { // no more cues
-            // write our temp data to file
-            [self writeStoredData];
-            // next block
-            [self nextBlock:nil];
-        }
-    }   // END OF SYNCHRONIZATION
+        // reset time marker
+        cueStartTime = current_time_marker();
+        
+        // display the cue
+        [cueView setCue:currentCue];
+        [cueView setHidden:NO];
+        // make the cue view the key view
+        [[view window] makeFirstResponder:cueView];
+        
+    } else { // no more cues
+        // write our temp data to file
+        [self writeStoredData];
+        // next block
+        [self nextBlock:nil];
+    }
+    
 }       // END OF NEXT_CUE:
 
 /** Start the next block if one exists */
 - (void)nextBlock: (id)params {
     
-    // synchronize this block so that keyed responses aren't processed
-    // before the IBI block state has been fully initialized
-    @synchronized(self) {
-        // if we are coming from an ITI state
-        if(state=RRFNBackStateTypeITI) {
-            // ...hide the ITI View
-            [itiView setHidden:YES];
-        }   // else we are coming from initial state,
-            // where nothing needs to be hidden
+    // if we are coming from an ITI state
+    if(state=RRFNBackStateTypeITI) {
+        // TODO: clean up view handling (no need)
+        // ...hide the ITI View
+        [itiView setHidden:YES];
+    }   // else we are coming from initial state,
+        // where nothing needs to be hidden
 
-        // get our next block...
-        // if there are any nValues left in the block set
-        if([blockSet count]>0) {
+    // get our next block...
+    // if there are any nValues left in the block set
+    if([blockSet count]>0) {
 
-            // get the next nValue
-            // ...pick an index at random from blockSet array
-            NSInteger idx = arc4random()%[blockSet count];
-            // ...store the new nValue
-            nValue = [[blockSet objectAtIndex:idx] integerValue];
-            // ...remove the value we are using from the block set
-            [blockSet removeObjectAtIndex:idx];
+        // get the next nValue
+        // ...pick an index at random from blockSet array
+        NSInteger idx = arc4random()%[blockSet count];
+        // ...store the new nValue
+        nValue = [[blockSet objectAtIndex:idx] integerValue];
+        // ...remove the value we are using from the block set
+        [blockSet removeObjectAtIndex:idx];
 
-            // load the new block using the new nValue
-            [self loadNewBlock];
-            
-            // begin the IBI
-            [self IBI:nil];
-                        
-        } else { // there are no nValues left in the block set
-            // .....get the next block set
-            [self nextBlockSet:nil];
-        }
-
-    }   // END OF SYNCHRONIZATION
+        // load the new block using the new nValue
+        [self loadNewBlock];
+        
+        // begin the IBI
+        [self IBI:nil];
+                    
+    } else { // there are no nValues left in the block set
+        // .....get the next block set
+        [self nextBlockSet:nil];
+    }
 }       // END OF NEXT_BLOCK:
 
 /** Start the next block set if one exists */
 - (void)nextBlockSet: (id)params {
     
-    @synchronized(self) {
-        // if we still have iterations to run
-        // (repeatCounter has not expired)
-        if(repeatCounter<[[definition valueForKey:RRFNBackBlockSetCountKey] integerValue]) {
-            // ...then, if we can succesfully load a new block set
-            if([self loadNewBlockSet]) {
-                // increment block set counter
-                repeatCounter++;
-                // ...start the next block
-                [self nextBlock:nil];
-            } else { // there was an error generating block set
-                // ...report error
-                [self registerError:@"Unable to generate new block set"];
-            }
-        } else { // repeat counter has expired
-            // ...then we are done
-            [delegate componentDidFinish:self];
+    // if we still have iterations to run
+    // (repeatCounter has not expired)
+    if(repeatCounter<[[definition valueForKey:RRFNBackBlockSetCountKey] integerValue]) {
+        // ...then, if we can succesfully load a new block set
+        if([self loadNewBlockSet]) {
+            // increment block set counter
+            repeatCounter++;
+            // ...start the next block
+            [self nextBlock:nil];
+        } else { // there was an error generating block set
+            // ...report error
+            [self registerError:@"Unable to generate new block set"];
         }
-
-    }   // END OF SYNCHRONIZATION
+    } else { // repeat counter has expired
+        // ...then we are done
+        [delegate componentDidFinish:self];
+    }
+    
 }       // END OF NEXT_BLOCK_SET:
 
 /** Start the ITI (inter-trial interval) */
 - (void)ITI: (id)params {
 
-    // synchronize this block so that keyed responses aren't processd
-    // until the iti is fully initialized
-    @synchronized(self) {
-        
-        // hide the image, but leave the cue view there to handle
-        // key events . . . the current cue is still held by us
-        // so this will not mess up our target checking
-        [cueView setCue:nil];
+    // hide the image, but leave the cue view there to handle
+    // key events . . . the current cue is still held by us
+    // so this will not mess up our target checking
+    [cueView setCue:nil];
+
+    // schedule the beginning of the next trial
+    [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
+                                            inSeconds:0
+                                         microSeconds:ITI_DURATION];
     
-        // schedule the beginning of the next trial
-        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
-                                                inSeconds:0
-                                             microSeconds:ITI_DURATION];
-        
-        // update state
-        state = RRFNBackStateTypeITI;
-    }
+    // update state
+    state = RRFNBackStateTypeITI;
+
 }
 
 /** Start the IBI (inter-block interval) */
 - (void)IBI: (id)params {
     
-    @synchronized(self) {
+    // update state
+    state=RRFNBackStateTypeIBI;
+    
+    // remove the cue view
+    [cueView setHidden:YES];
+    
+    #ifdef DEBUG
+    NSLog(@"\n\nIteration %d\n",repeatCounter);
+    for(NSDictionary *item in dataStorage) {
+        NSLog(@"%@",[item description]);
+    }
+    #endif
 
-        // update state
-        state=RRFNBackStateTypeIBI;
-        
-        // remove the cue view
-        [cueView setHidden:YES];
-        
-        NSLog(@"\n\nIteration %d\n",repeatCounter);
-        for(NSDictionary *item in dataStorage) {
-            NSLog(@"%@",[item description]);
-        }
+    // ready prompt subject prompt...
+    secondCounter = IBI_DURATION / (1000 * 1000); // IBI duration as seconds
+    // ...non-zero case
+    if(nValue) {
+        [self setIbiPrompt:[NSString stringWithFormat:@"Enter '1' when the image is the same as the image %d-back\n...begin in: %d",
+                            nValue, secondCounter ]];
+    } else { // zero case
+        [self setIbiPrompt:[NSString stringWithFormat:@"Enter '1' when the %@ is displayed\n...begin in: %d",
+                            [zeroTarget name], secondCounter ]];
+    }
+    // display prompt
+    [promptView setHidden:NO];
 
-        
-        // ready prompt subject prompt...
-        secondCounter = IBI_DURATION / (1000 * 1000); // IBI duration as seconds
-        // ...non-zero case
-        if(nValue) {
-            [self setIbiPrompt:[NSString stringWithFormat:@"Enter '1' when the image is the same as the image %d-back\n...begin in: %d",
-                                nValue, secondCounter ]];
-        } else { // zero case
-            [self setIbiPrompt:[NSString stringWithFormat:@"Enter '1' when the %@ is displayed\n...begin in: %d",
-                                [zeroTarget name], secondCounter ]];
-        }
-        // display prompt
-        [promptView setHidden:NO];
+    // schedule the beginning of the next block
+    [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
+                                            inSeconds: 0
+                                         microSeconds:IBI_DURATION];
 
-        // schedule the beginning of the next block
-        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackNextCueNotification object:self]
-                                                inSeconds: 0
-                                             microSeconds:IBI_DURATION];
+    // begin the ticking seconds countdown
+    [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackPerformTickNotification object:self]
+                                            inSeconds:1
+                                         microSeconds:0];
 
-        // begin the ticking seconds countdown
-        [[TKTimer appTimer] registerEventWithNotification:[NSNotification notificationWithName:RRFNBackPerformTickNotification object:self]
-                                                inSeconds:1
-                                             microSeconds:0];
-    }   // END SYNCH
 }       // END IBI:
 
 
@@ -531,20 +577,25 @@
     // if we are in appropriate state (CUE or ITI)
     if(state == RRFNBackStateTypePresentation ||
        state == RRFNBackStateTypeITI) {
-
-
+        // check if subject is correct
         if([self formsTarget:currentCue]) {
-            [dataStorage addObject:[DATA @"Confirm", @"ResponseType",
-                             @"Target", @"TrialType",
+            // ...subject is correct (claims target - is target)
+            [dataStorage addObject:[DATA @"Y", @"ResponseType",
+                             @"T", @"TrialType",
                         [NSNumber numberWithUnsignedInteger:
                          time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];
+            #ifdef DEBUG
             NSLog(@"User has correctly affirmed");
-        } else { // user has incorrectly affirmed target
-            [dataStorage addObject:[DATA @"Confirm", @"ResponseType",
-                             @"Non-Target", @"TrialType",
+            #endif
+        } else {
+            // ...subject is incorrect (claims target - not target)
+            [dataStorage addObject:[DATA @"Y", @"ResponseType",
+                             @"NT", @"TrialType",
                         [NSNumber numberWithUnsignedInteger:
-                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];
+            #ifdef DEBUG
             NSLog(@"User has incorrectly affirmed");
+            #endif
         }
         
     } else {
@@ -559,19 +610,24 @@
        state == RRFNBackStateTypeITI) {
         // ...then check if subject is correct
         if(![self formsTarget:currentCue]) {
-            // user has correctly denied target
-            // put data into our temporary storage for later analysis
-            [dataStorage addObject:[DATA @"Deny", @"ResponseType",
-                             @"Non-Target", @"TrialType",
-                        [NSNumber numberWithUnsignedInteger:
-                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
 
-        } else { // user has incorrectly denied target
-            // put data into our temporary storage for later analysis            
-            [dataStorage addObject:[DATA @"Deny", @"ResponseType",
-                             @"Target", @"TrialType",
+            // ...subject is correct (claims not target - is not target)
+            [dataStorage addObject:[DATA @"N", @"ResponseType",
+                             @"NT", @"TrialType",
                         [NSNumber numberWithUnsignedInteger:
-                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];            
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];
+            #ifdef DEBUG
+            NSLog(@"User has correctly denied");
+            #endif
+        } else { // user has incorrectly denied target
+            // ...subject is incorrect (claims not target - is target)
+            [dataStorage addObject:[DATA @"N", @"ResponseType",
+                             @"T", @"TrialType",
+                        [NSNumber numberWithUnsignedInteger:
+                         time_as_microseconds(time_since(cueStartTime))],@"Latency",nil]];
+            #ifdef DEBUG
+            NSLog(@"User has incorrectly denied");
+            #endif
         }
     } else {
         // we are not in a state where we accept user input
@@ -714,8 +770,6 @@
         // ...grab a cue at random and put into next spot in block
         selectedCue = arc4random()%[availableCues count];
         [tempBlock addObject:[availableCues objectAtIndex:selectedCue]];
-        
-        NSLog(@"Selected Cue: %@ From Index: %d",[[tempBlock objectAtIndex:i] name],selectedCue);
     }
     
     // create an array representing the targets
@@ -742,7 +796,6 @@
     }
     // sort the array in ascending order
     [targetBlock sortUsingSelector:@selector(compare:)];
-    NSLog(@"Target Block after sort: %@",[targetBlock description]);
     
     // organize the block with reference to target/non-target
     // for the normal (non-zero) case
@@ -784,17 +837,10 @@
         }
     }
 
-    NSLog(@"Temp Block after Target Placement: %@",[tempBlock description]);
-
     // copy the tempBlock over to our real block
     [block release]; block=nil;
     block = [[NSArray alloc] initWithArray:tempBlock];
     
-    NSLog(@"Block for %d-Back:",nValue);
-    for(NSInteger i=0; i<[block count]; i++) {
-        NSLog(@"Cue: %@",[[block objectAtIndex:i] name]);
-    }
-
     // reset block index
     blockIndex = -1;
     
