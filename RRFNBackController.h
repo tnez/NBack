@@ -56,7 +56,7 @@
 // ADDITIONAL PROPERTIES /////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 @property (nonatomic, retain)   NSString                        *ibiPrompt;
-@property (nonatomic, retain)   NSMutableArray                  *dataStorage;
+@property (retain)              NSMutableArray                  *dataStorage;
 @property (assign)              IBOutlet NSTextField            *promptView;
 @property (assign)              IBOutlet RRFNBackImageView      *cueView;
 @property (assign)              IBOutlet RRFNBackITIView        *itiView;
