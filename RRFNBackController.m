@@ -258,10 +258,10 @@
 
 /** Write data kept in the temporary store to a temporary file
     This will include a summary for the previous block
-    TODO: finish implementation
+    During execution, the component should be in an unknown state
  */
 - (void)writeStoredData {
-
+    
     // ___BLOCK SUMMARY___
     // vars to get
     NSUInteger correctRespTarget = 0;
@@ -444,6 +444,10 @@
         [[view window] makeFirstResponder:cueView];
         
     } else { // no more cues
+        // we are now in an unknown state
+        // marking this prevents responses when
+        // we are not prepared to process them
+        state = RRFNBackStateTypeUnknown;
         // write our temp data to file
         [self writeStoredData];
         // next block
