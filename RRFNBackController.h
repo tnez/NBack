@@ -11,7 +11,7 @@
 #import <Cocoa/Cocoa.h>
 #import <TKUtility/TKUtility.h>
 
-@class RRFNBackImageView,RRFNBackITIView,RRFNBackIBIView;
+@class RRFNBackImageView;
 
 @interface RRFNBackController : NSObject <TKComponentBundleLoading> {
 
@@ -41,8 +41,6 @@
     
     // IB ELEMENTS ///////////////////////////////////////////////////////////
     IBOutlet RRFNBackImageView                                  *cueView;
-    IBOutlet RRFNBackITIView                                    *itiView;
-    IBOutlet RRFNBackIBIView                                    *ibiView;
     IBOutlet NSTextField                                        *promptView;
 }
 
@@ -59,8 +57,6 @@
 @property (retain)              NSMutableArray                  *dataStorage;
 @property (assign)              IBOutlet NSTextField            *promptView;
 @property (assign)              IBOutlet RRFNBackImageView      *cueView;
-@property (assign)              IBOutlet RRFNBackITIView        *itiView;
-@property (assign)              IBOutlet RRFNBackIBIView        *ibiView;
 
 
 

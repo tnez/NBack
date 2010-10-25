@@ -21,7 +21,7 @@
 #define TKLogToTemp(fmt, ...) [delegate logStringToDefaultTempFile:[NSString stringWithFormat:fmt, ##__VA_ARGS__]]
 
 @implementation RRFNBackController
-@synthesize delegate,definition,errorLog,view,dataStorage,cueView,ibiPrompt,promptView,itiView,ibiView; // add any member that has a property
+@synthesize delegate,definition,errorLog,view,dataStorage,cueView,ibiPrompt,promptView; // add any member that has a property
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -123,8 +123,7 @@
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // hide all of our views
         [cueView setHidden:YES];
-        [itiView setHidden:YES];
-        [ibiView setHidden:YES];
+        [promptView setHidden:YES];
         
     } else {
         // nib did not load
