@@ -15,6 +15,7 @@
 #define oFALSE [NSNumber numberWithBool:FALSE]
 #define TRIALS [[definition valueForKey:RRFNBackTrialCountKey] integerValue]
 #define TARGETS [[definition valueForKey:RRFNBackTargetCountKey] integerValue]
+#define CUE_DIRECTORY [[definition valueForKey:RRFNBackCueDirectoryKey] stringByStandardizingPath]
 #define CUE_DURATION [[definition valueForKey:RRFNBackCueDurationKey] unsignedIntegerValue] * 1000
 #define ITI_DURATION [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000
 #define IBI_DURATION [[definition valueForKey:RRFNBackInterBlockDurationKey] unsignedIntegerValue] * 1000
@@ -28,13 +29,16 @@
  Give back any memory that may have been allocated by this bundle
  */
 - (void)dealloc {
-    [errorLog release]; errorLog=nil;
-    // any additional release calls go here
-    // ------------------------------------
+
+    // RELEASE ANY ALLOCATED MEMORY
+    [errorLog release]; errorLog=nil;    
     [availableCues release]; availableCues=nil;
     [blockSet release]; blockSet=nil;
     [block release]; block=nil;
     [ibiPrompt release]; ibiPrompt=nil;
+    [zeroTarget release]; zeroTarget=nil;
+
+    // CALL DEALLOC ON PARENT OBJECT
     [super dealloc];
 }
 
@@ -647,9 +651,9 @@
 
     // try to get the file paths for all the image files
     NSError *myError = nil;
-    NSArray *tempCues = nil;        
-    tempCues = [[[NSFileManager defaultManager]
-                 contentsOfDirectoryAtPath:[definition valueForKey:RRFNBackCueDirectoryKey] error:&myError] retain];
+    NSArray *tempCues = nil;
+    tempCues = [[[NSFileManager defaultManager] contentsOfDirectoryAtPath:CUE_DIRECTORY error:&myError] retain];
+    
     // if there was an error getting the file names...
     if(myError) {
         [self registerError:[NSString stringWithFormat:@"Could not load cues from Directory: %@\n%@",
@@ -673,9 +677,11 @@
         if([img_path hasPrefix:@"."]) {
             continue;   // go to next iteration of for loop
         }
-        image = [[NSImage alloc] initByReferencingFile:
-                             [[definition valueForKey:RRFNBackCueDirectoryKey] stringByAppendingPathComponent:img_path]];
+        image = [[NSImage alloc] initByReferencingFile:[CUE_DIRECTORY stringByAppendingPathComponent:img_path]];
         if([image isValid]) {
+            #ifdef DEBUNG
+            NSLog(@"Image: %@",[image description]);
+            #endif
             // if the image is valid add it to the heap
             [heap addObject:image];
             // and set the name of the image to file name
@@ -685,7 +691,7 @@
             [self registerError:[NSString stringWithFormat:@"Could not load image file: %@",img_path]];
         }
         // release the image object (it will be held on to by the array)
-        [image release];
+        [image release]; image = nil;
     }
     
     // move cues from heap to their permanent storage array
@@ -697,8 +703,8 @@
     }
     
     // release remaining temporary objects
-    [heap release];
-    [tempCues release];
+    [heap release]; heap = nil;
+    [tempCues release]; tempCues = nil;
     
     // return success (even if non-fatal errors have been reported)
     return YES;
