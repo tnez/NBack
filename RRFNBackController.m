@@ -459,14 +459,6 @@
 /** Start the next block if one exists */
 - (void)nextBlock: (id)params {
     
-    // if we are coming from an ITI state
-    if(state=RRFNBackStateTypeITI) {
-        // TODO: clean up view handling (no need)
-        // ...hide the ITI View
-        [itiView setHidden:YES];
-    }   // else we are coming from initial state,
-        // where nothing needs to be hidden
-
     // get our next block...
     // if there are any nValues left in the block set
     if([blockSet count]>0) {
