@@ -399,19 +399,26 @@ promptView;
     
     // log raw data
     // header row
-    TKLogToTemp(@"RESP:\tTYPE:\tLATENCY:");
-    TKLogToTemp(@"----\t----\t-------");
+    TKLogToTemp(@"RESP:\tTYPE:\tLATENCY:\tIMAGE:");
+    TKLogToTemp(@"----\t----\t-------\t\t-----");
     for(NSDictionary *record in dataStorage) {
-      // get time value from microseconds to struct
-      TKTime tmpTime = 
-      time_from_microseconds([[record valueForKey:@"Latency"]
-                              unsignedIntegerValue]);
-      TKLogToTemp(@"%@\t%@\t%d.%d",
-                  [record valueForKey:@"ResponseType"],
-                  [record valueForKey:@"TrialType"],
-                  tmpTime.seconds,
-                  tmpTime.microseconds);
-    }
+      // get latency value
+      NSInteger tempLatency = [[record valueForKey:@"Latency"] integerValue];
+      // if latency exists...
+      if(tempLatency) {
+        TKLogToTemp(@"%@\t%@\t%d\t\t%@",
+                    [record valueForKey:@"ResponseType"],
+                    [record valueForKey:@"TrialType"],
+                    tempLatency/1000,
+                    [record valueForKey:@"ImageName"]);
+      } else { // if no latency value exists...
+        TKLogToTemp(@"%@\t%@\t%@\t\t%@",
+                    [record valueForKey:@"ResponseType"],
+                    [record valueForKey:@"TrialType"],
+                    @"(null)",
+                    [record valueForKey:@"ImageName"]);
+      } // end of iffi
+    }   // end of for loop
     
     // empty our data storage for our next block
     [dataStorage removeAllObjects];
@@ -433,18 +440,20 @@ promptView;
             // ...but the subject did not respond...
             if([self formsTarget:currentCue]) {
                 // ...to a target trial
-                [dataStorage addObject:[DATA @"T", @"TrialType",nil]];
+                [dataStorage addObject:[DATA @"T", @"TrialType",
+                                        [currentCue name],@"ImageName",nil]];
             } else {
                 // ...to a non-target trial
-                [dataStorage addObject:[DATA @"NT", @"TrialType",nil]];
+                [dataStorage addObject:[DATA @"NT", @"TrialType",
+                                        [currentCue name],@"ImageName",nil]];
             }
         // no else branch - if the subject did respond, it has already been
         // handled    
         }
     } else { // the state is assumed to be RRFNBackStateTypeIBI
              // (no previous trial)
-        // ...hide the user prompt
-        [promptView setHidden:YES];
+        // ...hide the user time prompt
+        [timeView setHidden:YES];
     }
     
     // if there is another cue to get
@@ -635,8 +644,8 @@ promptView;
             [dataStorage addObject:
              [DATA @"Y", @"ResponseType",@"T", @"TrialType",
               [NSNumber numberWithUnsignedInteger:
-               time_as_microseconds(time_since(cueStartTime))],
-              @"Latency",nil]];
+               time_as_microseconds(time_since(cueStartTime))],@"Latency",
+              [currentCue name],@"ImageName",nil]];
             #ifdef DEBUG
             NSLog(@"User has correctly affirmed");
             #endif
@@ -645,8 +654,8 @@ promptView;
             [dataStorage addObject:
              [DATA @"Y", @"ResponseType",@"NT", @"TrialType",
               [NSNumber numberWithUnsignedInteger:
-               time_as_microseconds(time_since(cueStartTime))],
-              @"Latency",nil]];
+               time_as_microseconds(time_since(cueStartTime))],@"Latency",
+              [currentCue name],@"ImageName",nil]];
             #ifdef DEBUG
             NSLog(@"User has incorrectly affirmed");
             #endif
@@ -669,8 +678,8 @@ promptView;
             [dataStorage addObject:
              [DATA @"N", @"ResponseType",@"NT", @"TrialType",
               [NSNumber numberWithUnsignedInteger:
-               time_as_microseconds(time_since(cueStartTime))],
-              @"Latency",nil]];
+               time_as_microseconds(time_since(cueStartTime))],@"Latency",
+              [currentCue name],@"ImageName",nil]];
             #ifdef DEBUG
             NSLog(@"User has correctly denied");
             #endif
@@ -679,8 +688,8 @@ promptView;
             [dataStorage addObject:
              [DATA @"N", @"ResponseType",@"T", @"TrialType",
               [NSNumber numberWithUnsignedInteger:
-               time_as_microseconds(time_since(cueStartTime))],
-              @"Latency",nil]];
+               time_as_microseconds(time_since(cueStartTime))],@"Latency",
+              [currentCue name],@"ImageName",nil]];
             #ifdef DEBUG
             NSLog(@"User has incorrectly denied");
             #endif
