@@ -126,6 +126,13 @@
 
 
 #pragma mark UTILITY METHODS
+/** Take the available cues and return a randomly selected list w/ count
+    equal to the requested pool size
+    ARGS: available cues
+    RETURN: filtered cues ( count == requested pool size )
+ */
+- (NSArray *)filterCues: (NSArray *)universalCues;
+
 /** Does the cue object form a target with the n-back condition?
     ARGS: an NSImage representing a cue
  */
@@ -227,6 +234,7 @@ extern NSString * const RRFNBackInterTrialDurationKey;
 extern NSString * const RRFNBackMaxNConditionKey;
 extern NSString * const RRFNBackMinNConditionKey;
 extern NSString * const RRFNBackResponseTypeKey;
+extern NSString * const RRFNBackPoolSizeKey;
 extern NSString * const RRFNBackTargetCountKey;
 extern NSString * const RRFNBackTrialCountKey;
 

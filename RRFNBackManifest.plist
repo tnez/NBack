@@ -176,6 +176,24 @@
 		</dict>
 		<dict>
 			<key>optionIdentifier</key>
+			<string>RRFNBackPoolSize</string>
+			<key>displayName</key>
+			<string>Cue Pool Size</string>
+			<key>type</key>
+			<integer>1</integer>
+			<key>default</key>
+			<integer>7</integer>
+			<key>min</key>
+			<integer>2</integer>
+			<key>allowsEdit</key>
+			<true/>
+			<key>allowsNull</key>
+			<false/>
+			<key>help</key>
+			<string>The number of desired cues that should be considered for each run</string>
+		</dict>
+		<dict>
+			<key>optionIdentifier</key>
 			<string>RRFNBackTrialCount</string>
 			<key>displayName</key>
 			<string>Trial Count</string>

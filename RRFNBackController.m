@@ -15,6 +15,7 @@
 #define oFALSE [NSNumber numberWithBool:FALSE]
 #define TRIALS [[definition valueForKey:RRFNBackTrialCountKey] integerValue]
 #define TARGETS [[definition valueForKey:RRFNBackTargetCountKey] integerValue]
+#define POOL_SIZE [[definition valueForKey:RRFNBackPoolSizeKey] integerValue]
 #define CUE_DIRECTORY [[definition valueForKey:RRFNBackCueDirectoryKey] stringByStandardizingPath]
 #define CUE_DURATION [[definition valueForKey:RRFNBackCueDurationKey] unsignedIntegerValue] * 1000
 #define ITI_DURATION [[definition valueForKey:RRFNBackInterTrialDurationKey] unsignedIntegerValue] * 1000
@@ -222,6 +223,24 @@ timePrompt,operationView,timeView;
         
 
 #pragma mark UTILITY METHODS
+/** Take the available cues and return a randomly selected list w/ count
+ equal to the requested pool size
+ ARGS: available cues
+ RETURN: autoreleased NSArray *filtered cues ( count == requested pool size ) 
+ */
+- (NSArray *)filterCues: (NSArray *)universalCues {
+  // create a mutable array from the universal set
+  NSMutableArray *workingSet = [NSMutableArray arrayWithArray:universalCues];
+  // while the working set is larger than our target pool size...
+  NSInteger targetSize = POOL_SIZE; // since this is expensive, just do it once
+  while([workingSet count] > targetSize) {
+    // remove an element at random
+    [workingSet removeObjectAtIndex:arc4random()%[workingSet count]];
+  }
+  // return an autoreleased NSArray of filtered cues
+  return [[[NSArray alloc] initWithArray:workingSet] autorelease];
+}
+
 /** */
 - (BOOL)formsTarget: (NSImage *)cue {
     // the zero case needs special handling...
@@ -784,7 +803,17 @@ timePrompt,operationView,timeView;
         [self registerError:
          @"Less than two cues have been loaded, this is problematic"];
     }
-    
+  
+    // if pool size is too small...
+    if(POOL_SIZE < 2) {
+      [self registerError:@"Requested pool size is too small"];
+    }
+    // if pool size is too big...
+    if(POOL_SIZE > [availableCues count]) {
+      [self registerError:
+       @"Requested pool size is greater than the number of available cues"];
+    }
+  
     // release remaining temporary objects
     [heap release]; heap = nil;
     [tempCues release]; tempCues = nil;
@@ -838,7 +867,12 @@ timePrompt,operationView,timeView;
         [self registerError:@"Could not load block: no cues available"];
         return NO;
     }
-
+    // if for some reason requested pool size is greater than available cues...
+    if(POOL_SIZE > [availableCues count]) {
+      [self registerError:
+       @"Requested pool size is greater than number of cues available"];
+    }
+  
     // grab values for trials and targets
     NSInteger trials = 
       [[definition valueForKey:RRFNBackTrialCountKey] integerValue];
@@ -851,14 +885,17 @@ timePrompt,operationView,timeView;
     // create new (empty) mutable arrray to hold temp cues
     NSMutableArray *tempBlock = nil;
     tempBlock = [[NSMutableArray alloc] init];
+  
+    // get filtered array from available cues
+    NSArray *filteredCues = [self filterCues:availableCues];
     
     // populate temp block with random sequence of images
     NSInteger selectedCue = (NSInteger)nil;
     // ... for each intended trial ...
     for(NSInteger i=0; i<trials; i++) {
         // ...grab a cue at random and put into next spot in block
-        selectedCue = arc4random()%[availableCues count];
-        [tempBlock addObject:[availableCues objectAtIndex:selectedCue]];
+        selectedCue = arc4random()%[filteredCues count];
+        [tempBlock addObject:[filteredCues objectAtIndex:selectedCue]];
     }
     
     // create an array representing the targets
@@ -906,14 +943,14 @@ timePrompt,operationView,timeView;
                     //...generate a random cue
                     [tempBlock replaceObjectAtIndex:i
                                          withObject:
-                     [availableCues objectAtIndex:
-                      arc4random()%[availableCues count]]];
+                     [filteredCues objectAtIndex:
+                      arc4random()%[filteredCues count]]];
                 }
             }
         }
     } else { // the zero case
         zeroTarget=
-          [availableCues objectAtIndex:arc4random()%[availableCues count]];
+          [filteredCues objectAtIndex:arc4random()%[filteredCues count]];
 
         // ...for each spot in the temp block
         for(NSInteger i=0;i<[tempBlock count];i++) {
@@ -928,8 +965,8 @@ timePrompt,operationView,timeView;
                     // ...randomly select a new cue
                     [tempBlock replaceObjectAtIndex:i 
                                          withObject:
-                     [availableCues objectAtIndex:
-                      arc4random()%[availableCues count]]];
+                     [filteredCues objectAtIndex:
+                      arc4random()%[filteredCues count]]];
                 }
             }
         }
@@ -972,6 +1009,7 @@ NSString * const RRFNBackInterTrialDurationKey =    @"RRFNBackInterTrialDuration
 NSString * const RRFNBackMaxNConditionKey =         @"RRFNBackMaxNCondition";
 NSString * const RRFNBackMinNConditionKey =         @"RRFNBackMinNCondition";
 NSString * const RRFNBackResponseTypeKey =          @"RRFNBackResponseType";
+NSString * const RRFNBackPoolSizeKey =              @"RRFNBackPoolSize";
 NSString * const RRFNBackTargetCountKey =           @"RRFNBackTargetCount";
 NSString * const RRFNBackTrialCountKey =            @"RRFNBackTrialCount";
 
