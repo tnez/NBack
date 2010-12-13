@@ -777,13 +777,18 @@ timePrompt,operationView,timeView;
           [[NSImage alloc] initByReferencingFile:
            [CUE_DIRECTORY stringByAppendingPathComponent:img_path]];
         if([image isValid]) {
-            #ifdef DEBUNG
-            NSLog(@"Image: %@",[image description]);
-            #endif
+            // reset the name to nil before trying to rename
+            // attempt to fix bug where images would not rename
+            [image setName:nil];
+            // and set the name of the image to file name
+            [image setName:[img_path stringByDeletingPathExtension]];          
             // if the image is valid add it to the heap
             [heap addObject:image];
-            // and set the name of the image to file name
-            [image setName:[img_path stringByDeletingPathExtension]];
+            #ifdef DEBUG
+            NSLog(@"HEAP: %d",[heap count]);
+            NSLog(@"HEAP (LastObject): %@",[[heap lastObject] description]);
+            NSLog(@"Image Name: %@",[image name]);
+            #endif
         } else {
             // else, register the error
             [self registerError:
@@ -795,7 +800,7 @@ timePrompt,operationView,timeView;
     }
     
     // move cues from heap to their permanent storage array
-    availableCues = [[NSArray alloc] initWithArray:(NSArray *)heap];
+    availableCues = [[NSArray alloc] initWithArray:heap];
     
     // report if there are less than two cues . . . if so, n-back will not
     // make sense
