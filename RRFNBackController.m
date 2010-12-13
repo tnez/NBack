@@ -23,8 +23,8 @@
 
 @implementation RRFNBackController
 // add any member that has a property
-@synthesize delegate,definition,errorLog,view,dataStorage,cueView,ibiPrompt,
-promptView;
+@synthesize delegate,definition,errorLog,view,dataStorage,cueView,opPrompt,
+timePrompt,operationView,timeView;
 
 #pragma mark HOUSEKEEPING METHODS
 /**
@@ -37,7 +37,8 @@ promptView;
     [availableCues release]; availableCues=nil;
     [blockSet release]; blockSet=nil;
     [block release]; block=nil;
-    [ibiPrompt release]; ibiPrompt=nil;
+    [opPrompt release]; opPrompt=nil;
+    [timePrompt release]; timePrompt=nil;
     [zeroTarget release]; zeroTarget=nil;
 
     // CALL DEALLOC ON PARENT OBJECT
@@ -135,7 +136,7 @@ promptView;
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // hide all of our views
         [cueView setHidden:YES];
-        [promptView setHidden:YES];
+        [timeView setHidden:YES];
         
     } else {
         // nib did not load
@@ -256,14 +257,9 @@ promptView;
     // ...so if we have time left (presumably)
     if(secondCounter-- > 0) {
         // update the subject prompt
-        // ...get all but the last of the user prompt
-        NSString *tmp = [[ibiPrompt stringByTrimmingCharactersInSet:
-                          [NSCharacterSet decimalDigitCharacterSet]] retain];
-        // ...make new string w/ previous and new second tick
-        [self setIbiPrompt:[tmp stringByAppendingString:
-                            [NSString stringWithFormat:@"%d",secondCounter ]]];
-        // ...let go of temporary string
-        [tmp release]; tmp=nil;
+        [self setTimePrompt:
+         [NSString stringWithFormat:
+          @"Begin in %d seconds...",secondCounter]];        
         // schedule the next notification
         [[TKTimer appTimer] registerEventWithNotification:
          [NSNotification notificationWithName:
@@ -596,22 +592,33 @@ promptView;
     #endif
 
     // ready prompt subject prompt...
-    secondCounter = IBI_DURATION / (1000 * 1000); // IBI duration as seconds
-    // ...non-zero case
-    if(nValue) {
-        [self setIbiPrompt:
-         [NSString stringWithFormat:
-          @"Enter '1' when the image is the same as the image %d-back\n...begin in: %d",
-          nValue, secondCounter ]];
-    } else { // zero case
-        [self setIbiPrompt:
-         [NSString stringWithFormat:
-          @"Enter '1' when the %@ is displayed\n...begin in: %d",
-          [zeroTarget name], secondCounter ]];
-    }
-    // display prompt
-    [promptView setHidden:NO];
 
+    // switch based on nValue
+    switch (nValue) {
+      case 0:
+        [self setOpPrompt:
+         [NSString stringWithFormat:
+          @"Press the '1' key whenever you see the %@",[zeroTarget name]]];
+        break;
+      case 1:
+        [self setOpPrompt:
+         [NSString stringWithFormat:
+          @"Press the '1' key whenever you see any image that was the same as the immediately preceding image."]];
+        break;
+      default: // default will handle 2 or more back
+        [self setOpPrompt:
+         [NSString stringWithFormat:
+          @"Press the '1' key whenever you see an image that is the same as the one you saw %d images back.",nValue]];
+        break;
+    }
+
+    // set the time prompt
+    secondCounter = IBI_DURATION / 1000 / 1000;
+    [self setTimePrompt:
+     [NSString stringWithFormat:
+      @"Begin in %d seconds...",secondCounter]];
+    [timeView setHidden:NO];
+    
     // schedule the beginning of the next block
     [[TKTimer appTimer]
      registerEventWithNotification:

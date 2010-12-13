@@ -35,13 +35,15 @@
     NSInteger                                                   repeatCounter;
     NSInteger                                                   state;
     NSInteger                                                   secondCounter;
-    NSString                                                    *ibiPrompt;
+    NSString                                                    *opPrompt;
+    NSString                                                    *timePrompt;
     NSMutableArray                                              *dataStorage;
     TKTime                                                      cueStartTime;
     
     // IB ELEMENTS ///////////////////////////////////////////////////////////
     IBOutlet RRFNBackImageView                                  *cueView;
-    IBOutlet NSTextField                                        *promptView;
+    IBOutlet NSTextField                                        *operationView;
+    IBOutlet NSTextField                                        *timeView;
 }
 
 // PROTOCOL PROPERTIES ///////////////////////////////////////////////////////
@@ -53,9 +55,11 @@
 
 // ADDITIONAL PROPERTIES /////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-@property (nonatomic, retain)   NSString                        *ibiPrompt;
+@property (nonatomic, retain)   NSString                        *opPrompt;
+@property (nonatomic, retain)   NSString                        *timePrompt;
 @property (retain)              NSMutableArray                  *dataStorage;
-@property (assign)              IBOutlet NSTextField            *promptView;
+@property (assign)              IBOutlet NSTextField            *operationView;
+@property (assign)              IBOutlet NSTextField            *timeView;
 @property (assign)              IBOutlet RRFNBackImageView      *cueView;
 
 
