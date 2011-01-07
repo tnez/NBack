@@ -33,15 +33,6 @@ timePrompt,operationView,timeView;
  */
 - (void)dealloc {
 
-    // RELEASE ANY ALLOCATED MEMORY
-    [errorLog release]; errorLog=nil;    
-    [availableCues release]; availableCues=nil;
-    [blockSet release]; blockSet=nil;
-    [block release]; block=nil;
-    [opPrompt release]; opPrompt=nil;
-    [timePrompt release]; timePrompt=nil;
-    [zeroTarget release]; zeroTarget=nil;
-
     // CALL DEALLOC ON PARENT OBJECT
     [super dealloc];
 }
@@ -176,12 +167,16 @@ timePrompt,operationView,timeView;
  Perform any and all finalization required by component
  */
 - (void)tearDown {
-    // any finalization should be done here:
-    // - remove any temporary data files
-    
-    // - remove observers for any notifications we may have registered
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
+  // - remove observers for any notifications we may have registered
+  [[NSNotificationCenter defaultCenter] removeObserver:self];  
+  // RELEASE ANY ALLOCATED MEMORY
+  [errorLog release]; errorLog=nil;    
+  [availableCues release]; availableCues=nil;
+  [blockSet release]; blockSet=nil;
+  [block release]; block=nil;
+  [opPrompt release]; opPrompt=nil;
+  [timePrompt release]; timePrompt=nil;
+  [zeroTarget release]; zeroTarget=nil;  
 }
 
 /**
@@ -470,7 +465,11 @@ timePrompt,operationView,timeView;
         // ...hide the user time prompt
         [timeView setHidden:YES];
     }
-    
+    #ifdef DEBUG
+    NSLog(@"Block index: %d",blockIndex);
+    NSLog(@"Block count: %d",[block count]);
+    NSLog(@"%@",block);
+    #endif
     // if there is another cue to get
     if(++blockIndex < [block count]) {
         // get the new cue
@@ -511,6 +510,9 @@ timePrompt,operationView,timeView;
         [[view window] makeFirstResponder:cueView];
         
     } else { // no more cues
+        #ifdef DEBUG
+        NSLog(@"No more cues");
+        #endif
         // we are now in an unknown state
         // marking this prevents responses when
         // we are not prepared to process them
@@ -566,6 +568,7 @@ timePrompt,operationView,timeView;
         } else { // there was an error generating block set
             // ...report error
             [self registerError:@"Unable to generate new block set"];
+            NSLog(@"Could not generate new block set!!!");
         }
     } else { // repeat counter has expired
         // ...then we are done
@@ -773,15 +776,19 @@ timePrompt,operationView,timeView;
         if([img_path hasPrefix:@"."]) {
             continue;   // go to next iteration of for loop
         }
-        image =
-          [[NSImage alloc] initByReferencingFile:
-           [CUE_DIRECTORY stringByAppendingPathComponent:img_path]];
+        // try to assign the image by name
+        image = [NSImage imageNamed:[img_path stringByDeletingPathExtension]];
+        // if that was unsuccessful... create image from scratch
+        if(!image) {
+            image = [[NSImage alloc] initByReferencingFile:
+                     [CUE_DIRECTORY stringByAppendingPathComponent:img_path]];
+        }
         if([image isValid]) {
             // reset the name to nil before trying to rename
             // attempt to fix bug where images would not rename
             [image setName:nil];
             // and set the name of the image to file name
-            [image setName:[img_path stringByDeletingPathExtension]];          
+            [image setName:[img_path stringByDeletingPathExtension]];
             // if the image is valid add it to the heap
             [heap addObject:image];
             #ifdef DEBUG
@@ -870,6 +877,7 @@ timePrompt,operationView,timeView;
     if(![availableCues count]) {
         //...register error
         [self registerError:@"Could not load block: no cues available"];
+        NSLog(@"No available cues!!!");
         return NO;
     }
     // if for some reason requested pool size is greater than available cues...
