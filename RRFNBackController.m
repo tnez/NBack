@@ -564,7 +564,8 @@ timePrompt,operationView,timeView;
         }
     } else { // repeat counter has expired
         // ...then we are done
-        [delegate componentDidFinish:self];
+        [delegate performSelectorOnMainThread:@selector(componentDidFinish:)
+                                   withObject:self waitUntilDone:YES];
     }
     
 }       // END OF NEXT_BLOCK_SET:
