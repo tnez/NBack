@@ -465,11 +465,6 @@ timePrompt,operationView,timeView;
         // ...hide the user time prompt
         [timeView setHidden:YES];
     }
-    #ifdef DEBUG
-    NSLog(@"Block index: %d",blockIndex);
-    NSLog(@"Block count: %d",[block count]);
-    NSLog(@"%@",block);
-    #endif
     // if there is another cue to get
     if(++blockIndex < [block count]) {
         // get the new cue
@@ -510,9 +505,6 @@ timePrompt,operationView,timeView;
         [[view window] makeFirstResponder:cueView];
         
     } else { // no more cues
-        #ifdef DEBUG
-        NSLog(@"No more cues");
-        #endif
         // we are now in an unknown state
         // marking this prevents responses when
         // we are not prepared to process them
@@ -605,15 +597,6 @@ timePrompt,operationView,timeView;
     
     // remove the cue view
     [cueView setHidden:YES];
-    
-    #ifdef DEBUG
-    NSLog(@"\n\nIteration %d\n",repeatCounter);
-    for(NSDictionary *item in dataStorage) {
-        NSLog(@"%@",[item description]);
-    }
-    #endif
-
-    // ready prompt subject prompt...
 
     // switch based on nValue
     switch (nValue) {
@@ -791,11 +774,6 @@ timePrompt,operationView,timeView;
             [image setName:[img_path stringByDeletingPathExtension]];
             // if the image is valid add it to the heap
             [heap addObject:image];
-            #ifdef DEBUG
-            NSLog(@"HEAP: %d",[heap count]);
-            NSLog(@"HEAP (LastObject): %@",[[heap lastObject] description]);
-            NSLog(@"Image Name: %@",[image name]);
-            #endif
         } else {
             // else, register the error
             [self registerError:
