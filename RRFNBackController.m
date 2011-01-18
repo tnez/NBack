@@ -32,16 +32,6 @@ timePrompt,operationView,timeView;
  Give back any memory that may have been allocated by this bundle
  */
 - (void)dealloc {
-    // - remove observers for any notifications we may have registered
-    [[NSNotificationCenter defaultCenter] removeObserver:self];  
-    // RELEASE ANY ALLOCATED MEMORY
-    [errorLog release]; errorLog=nil;    
-    [availableCues release]; availableCues=nil;
-    [blockSet release]; blockSet=nil;
-    [block release]; block=nil;
-    [opPrompt release]; opPrompt=nil;
-    [timePrompt release]; timePrompt=nil;
-    [zeroTarget release]; zeroTarget=nil;  
     // CALL DEALLOC ON PARENT OBJECT
     [super dealloc];
 }
@@ -176,7 +166,22 @@ timePrompt,operationView,timeView;
  Perform any and all finalization required by component
  */
 - (void)tearDown {
-
+  // - remove any temporary data files
+  // ......
+  // - remove the default temp file
+  [[NSFileManager defaultManager] removeItemAtPath:
+   [[delegate tempDirectory] stringByAppendingPathComponent:
+    [delegate defaultTempFile]] error:nil];
+  // - remove observers for any notifications we may have registered
+  [[NSNotificationCenter defaultCenter] removeObserver:self];  
+  // RELEASE ANY ALLOCATED MEMORY
+  [errorLog release]; errorLog=nil;    
+  [availableCues release]; availableCues=nil;
+  [blockSet release]; blockSet=nil;
+  [block release]; block=nil;
+  [opPrompt release]; opPrompt=nil;
+  [timePrompt release]; timePrompt=nil;
+  [zeroTarget release]; zeroTarget=nil;  
 }
 
 /**
@@ -564,8 +569,7 @@ timePrompt,operationView,timeView;
         }
     } else { // repeat counter has expired
         // ...then we are done
-        [delegate performSelectorOnMainThread:@selector(componentDidFinish:)
-                                   withObject:self waitUntilDone:YES];
+        [delegate componentDidFinish:self];
     }
     
 }       // END OF NEXT_BLOCK_SET:
